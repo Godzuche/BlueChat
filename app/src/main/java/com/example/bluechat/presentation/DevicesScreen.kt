@@ -1,15 +1,18 @@
 package com.example.bluechat.presentation
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -33,56 +36,81 @@ fun DevicesRoute(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DevicesScreen(
     uiState: BluetoothUiState,
     onDeviceClick: (BluetoothDevice) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val lazyGridState = rememberLazyGridState()
+    val pairedDeviceListState = rememberLazyListState()
+    val scannedDeviceListState = rememberLazyListState()
 
-    LazyVerticalGrid(
-        state = lazyGridState,
-        columns = GridCells.Adaptive(150.dp),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .then(modifier),
+            .then(modifier)
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(text = "Paired Devices")
+        Text(
+            text = "Paired Devices",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
+        )
+
+
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                state = pairedDeviceListState,
+            ) {
+                items(
+                    items = uiState.pairedDevices.toList(),
+                ) { device ->
+                    Text(
+                        text = device.name ?: device.hardwareAddress,
+                        modifier = Modifier
+                            .animateItemPlacement()
+                            .fillMaxWidth()
+                            .clickable { onDeviceClick(device) }
+                            .padding(20.dp),
+                    )
+                }
+            }
         }
-        items(
-            items = uiState.pairedDevices.toList(),
-            span = { GridItemSpan(maxLineSpan) },
-        ) { device ->
-            Text(
-                text = device.name ?: device.hardwareAddress,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onDeviceClick(device) },
-            )
-        }
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Text(text = "Available Devices")
-        }
-        items(
-            items = uiState.scannedDevices.toList(),
-            span = { GridItemSpan(maxLineSpan) },
-        ) { device ->
-            Text(
-                text = device.name ?: device.hardwareAddress,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onDeviceClick(device) },
-            )
+
+        Text(
+            text = "Available Devices",
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
+        )
+
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                state = scannedDeviceListState,
+            ) {
+                items(items = uiState.scannedDevices.toList()) { device ->
+                    Text(
+                        text = device.name ?: device.hardwareAddress,
+                        modifier = Modifier
+                            .animateItemPlacement()
+                            .fillMaxWidth()
+                            .clickable { onDeviceClick(device) }
+                            .padding(20.dp),
+                    )
+                }
+            }
         }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun DevicesScreenPreview() {
     BlueChatTheme {

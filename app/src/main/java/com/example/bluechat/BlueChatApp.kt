@@ -14,6 +14,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,9 +47,12 @@ fun BlueChatApp(
                         }
 
                         Log.d("BT", "IsDiscovering" + uiState.isDiscovering.toString())
-                        Log.d("BT", "IsDiscoveryFinished" + uiState.isDiscoveringFinished.toString())
+                        Log.d(
+                            "BT",
+                            "IsDiscoveryFinished" + uiState.isDiscoveringFinished.toString()
+                        )
 
-                        val buttonText = if (uiState.isDiscovering) "Stop" else "Start"
+                        val buttonText = if (uiState.isDiscovering) "Stop" else "Scan"
                         TextButton(
                             onClick = if (uiState.isDiscovering) bluetoothViewModel::stopScan else bluetoothViewModel::startScan,
                         ) {
@@ -63,9 +67,13 @@ fun BlueChatApp(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                 ) {
-                    Text(text = "Host Chat")
-                    Icon(imageVector = Icons.Rounded.Add, contentDescription = "Add")
+                    Text(
+                        text = "Host Chat",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Icon(imageVector = Icons.Rounded.Add, contentDescription = "Host Chat")
                 }
             }
         }
