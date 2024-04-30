@@ -1,6 +1,7 @@
 package com.example.bluechat
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Intent
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
     private val isBluetoothEnabled: Boolean
         get() = bluetoothAdapter?.isEnabled == true
 
+    @SuppressLint("InlinedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
         ) {
             if (it.resultCode == RESULT_OK) {
                 Toast.makeText(this, "Bluetooth successfully turned on.", Toast.LENGTH_LONG).show()
+                viewModel.updatePairedDevices()
             } else {
                 // Show a dialog explaining why the user has to turn on bluetooth.
             }
@@ -63,14 +66,27 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissionLauncher.launch(
                 arrayOf(
                     Manifest.permission.BLUETOOTH_SCAN,
                     Manifest.permission.BLUETOOTH_CONNECT,
+//                    Manifest.permission.BLUETOOTH,
                 )
             )
-        }
+//        } else {
+            /*enableBluetoothLauncher.launch(
+                Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            )*/
+
+            /*permissionLauncher.launch(
+                arrayOf(
+                    *//*Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADMIN,*//*
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                )
+            )*/
+//        }
 
         setContent {
             val isBluetoothEnabledAndPermissionGranted =

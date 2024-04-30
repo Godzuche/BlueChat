@@ -1,18 +1,24 @@
 package com.example.bluechat.presentation
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bluechat.domain.BluetoothController
 import com.example.bluechat.domain.BluetoothDevice
+import com.example.bluechat.domain.ConnectionResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,6 +42,8 @@ class BluetoothViewModel @Inject constructor(
         initialValue = _state.value
     )
 
+    private var deviceConnectionJob: Job? = null
+
     init {
         bluetoothController.isConnected.onEach { isConnected ->
             _state.update {
@@ -44,6 +52,7 @@ class BluetoothViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         bluetoothController.error.onEach { error ->
+            Log.d("BT", "error: $error")
             _state.update {
                 it.copy(errorMessage = error)
             }
@@ -71,15 +80,83 @@ class BluetoothViewModel @Inject constructor(
     }
 
     fun listenAndWaitForIncommingConnections() {
-        //
+        _state.update { it.copy(isConnecting = true) }
+        deviceConnectionJob = bluetoothController
+            .startBluetoothServer()
+            .listen()
     }
 
     fun connectToDevice(device: BluetoothDevice) {
-        //
+        _state.update { it.copy(isConnecting = true) }
+        deviceConnectionJob = bluetoothController
+            .connectToDevice(device)
+            .listen()
+    }
+
+    fun disconnectFromDevice() {
+        deviceConnectionJob?.cancel()
+        bluetoothController.closeConnection()
+        _state.update {
+            it.copy(isConnecting = false, isConnected = false)
+        }
     }
 
     fun updatePairedDevices() {
         bluetoothController.updatePairedDevices()
+    }
+
+    fun sendMessage(messages: String) {
+        viewModelScope.launch {
+            val bluetoothMessage = bluetoothController.trySendMessage(messages)
+            if (bluetoothMessage != null) {
+                _state.update {
+                    it.copy(
+                        messages = it.messages + bluetoothMessage
+                    )
+                }
+            }
+        }
+    }
+
+    private fun Flow<ConnectionResult>.listen(): Job {
+        return onEach { result ->
+            when (result) {
+                ConnectionResult.ConnectionEstablished -> {
+                    _state.update {
+                        it.copy(
+                            isConnected = true,
+                            isConnecting = false,
+                            errorMessage = null
+                        )
+                    }
+                }
+
+                is ConnectionResult.Error -> {
+                    _state.update {
+                        it.copy(
+                            isConnected = false,
+                            isConnecting = false,
+                            errorMessage = result.errorMessage
+                        )
+                    }
+                }
+
+                is ConnectionResult.TransferSucceeded -> {
+                    //
+                }
+
+            }
+        }
+            .catch { throwable ->
+                bluetoothController.closeConnection()
+                _state.update {
+                    it.copy(
+                        isConnected = false,
+                        isConnecting = false,
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     override fun onCleared() {

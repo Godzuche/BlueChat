@@ -1,6 +1,7 @@
 package com.example.bluechat
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -20,12 +21,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.bluechat.presentation.BluetoothViewModel
 import com.example.bluechat.presentation.DevicesRoute
 
@@ -34,7 +38,7 @@ import com.example.bluechat.presentation.DevicesRoute
 fun BlueChatApp(
     bluetoothViewModel: BluetoothViewModel = hiltViewModel(),
 ) {
-    val uiState by bluetoothViewModel.state.collectAsState()
+    val uiState by bluetoothViewModel.state.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -84,7 +88,36 @@ fun BlueChatApp(
                 .padding(it)
                 .consumeWindowInsets(it)
         ) {
-            DevicesRoute()
+            val navController = rememberNavController()
+
+            NavHost(
+                startDestination = "devices",
+                navController = navController
+            ) {
+                composable("devices") {
+                    DevicesRoute(
+                        navigateToChat = { navController.navigate("chat") }
+                    )
+                }
+
+                composable("chat") {
+                    Box {
+                        Text(text = "Chat")
+                    }
+                }
+            }
         }
+
+        if (uiState.isConnecting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.4f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
     }
 }
