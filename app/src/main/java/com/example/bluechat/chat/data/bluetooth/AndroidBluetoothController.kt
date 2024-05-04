@@ -1,4 +1,4 @@
-package com.example.bluechat.data
+package com.example.bluechat.chat.data.bluetooth
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -10,14 +10,14 @@ import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
-import com.example.bluechat.data.util.hasPermission
-import com.example.bluechat.domain.BluetoothController
-import com.example.bluechat.domain.BluetoothDeviceDomain
-import com.example.bluechat.domain.BluetoothMessage
-import com.example.bluechat.domain.ConnectionResult
+import android.util.Log
+import com.example.bluechat.chat.data.bluetooth.util.hasPermission
+import com.example.bluechat.chat.domain.BluetoothController
+import com.example.bluechat.chat.domain.BluetoothDeviceDomain
+import com.example.bluechat.chat.domain.BluetoothMessage
+import com.example.bluechat.chat.domain.ConnectionResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -117,7 +117,9 @@ class AndroidBluetoothController @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override fun startDiscovery() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && context.hasPermission(Manifest.permission.BLUETOOTH_SCAN).not()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && context.hasPermission(Manifest.permission.BLUETOOTH_SCAN)
+                .not()
+        ) {
             return
         }
 
@@ -131,7 +133,7 @@ class AndroidBluetoothController @Inject constructor(
                 addAction(BluetoothDevice.ACTION_FOUND)
                 addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
                 addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-            }
+            },
         )
 
         updatePairedDevices()
@@ -179,8 +181,8 @@ class AndroidBluetoothController @Inject constructor(
                 throw SecurityException("No BLUETOOTH_CONNECT permission")
             }
 
-            currentServerSocket = bluetoothAdapter?.listenUsingInsecureRfcommWithServiceRecord(
-                "chat service",
+            currentServerSocket = bluetoothAdapter?.listenUsingRfcommWithServiceRecord(
+                "bluechat_service",
                 UUID.fromString(SERVICE_UUID)
             )
 
@@ -202,7 +204,7 @@ class AndroidBluetoothController @Inject constructor(
 
                     emitAll(
                         service
-                            .listenForIncommingData()
+                            .listenForIncomingData()
                             .map {
                                 ConnectionResult.TransferSucceeded(it)
                             }
@@ -225,21 +227,25 @@ class AndroidBluetoothController @Inject constructor(
             val bluetoothDevice by lazy {
                 bluetoothAdapter?.getRemoteDevice(device.hardwareAddress)
             }
+            Log.d("Connect", "uuid: ${device.uuid}")
             currentClientSocket = bluetoothDevice?.createRfcommSocketToServiceRecord(
                 UUID.fromString(SERVICE_UUID)
+            )
+            Log.d(
+                "Connect",
+                if (currentClientSocket == null) "cl socket null" else "cl socket not null"
             )
 
             stopDiscovery()
 
             currentClientSocket?.let { socket ->
                 try {
-                    CoroutineScope(Dispatchers.IO).async {
-                        socket.connect()
-                    }.await()
+                    socket.connect()
+                    Log.d("Connect", "connection established")
                     emit(ConnectionResult.ConnectionEstablished)
                     BluetoothDataTransferService(socket).also {
                         dataTransferService = it
-                        emitAll(it.listenForIncommingData().map { data ->
+                        emitAll(it.listenForIncomingData().map { data ->
                             ConnectionResult.TransferSucceeded(data)
                         })
                     }
@@ -247,6 +253,7 @@ class AndroidBluetoothController @Inject constructor(
                     socket.close()
                     currentClientSocket = null
                     e.printStackTrace()
+                    Log.d("Connect", "connection error: ${e.localizedMessage}")
                     emit(ConnectionResult.Error("Connection was interrupted \n " + e.localizedMessage))
                 }
             }
@@ -292,5 +299,6 @@ class AndroidBluetoothController @Inject constructor(
 
     companion object {
         const val SERVICE_UUID = "27b7d1da-08c7-4505-a6d1-2459987e5e2d"
+        const val SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
     }
 }

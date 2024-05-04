@@ -1,4 +1,4 @@
-package com.example.bluechat.presentation
+package com.example.bluechat.chat.presentation.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -10,11 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bluechat.domain.BluetoothMessage
-import com.example.bluechat.ui.theme.BlueChatTheme
+import com.example.bluechat.R
+import com.example.bluechat.chat.domain.BluetoothMessage
+import com.example.bluechat.design_system.theme.BlueChatTheme
 
 @Composable
 fun ChatMessage(
@@ -22,7 +24,7 @@ fun ChatMessage(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clip(
                 RoundedCornerShape(
                     topStart = if (message.isFromLocalUser) 15.dp else 0.dp,
@@ -34,7 +36,7 @@ fun ChatMessage(
             .background(
                 if (message.isFromLocalUser) Color.Red else Color.Blue
             )
-            .padding(16.dp)
+            .padding(16.dp),
     ) {
         Text(
             text = message.senderName,
@@ -55,9 +57,9 @@ fun MessagePreview() {
     BlueChatTheme {
         ChatMessage(
             message = BluetoothMessage(
-                message = "Hello World!",
-                senderName = "Samsung A23",
-                isFromLocalUser = false
+                message = stringResource(id = R.string.hello_world),
+                senderName = stringResource(id = R.string.samsung),
+                isFromLocalUser = false,
             )
         )
     }

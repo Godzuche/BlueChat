@@ -1,4 +1,4 @@
-package com.example.bluechat.ui.theme
+package com.example.bluechat.design_system.theme
 
 import android.app.Activity
 import android.os.Build

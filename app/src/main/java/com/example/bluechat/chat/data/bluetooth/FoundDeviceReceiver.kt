@@ -1,4 +1,4 @@
-package com.example.bluechat.data
+package com.example.bluechat.chat.data.bluetooth
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice

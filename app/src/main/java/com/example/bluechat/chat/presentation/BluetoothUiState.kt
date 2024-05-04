@@ -1,11 +1,11 @@
-package com.example.bluechat.presentation
+package com.example.bluechat.chat.presentation
 
-import com.example.bluechat.domain.BluetoothDevice
-import com.example.bluechat.domain.BluetoothMessage
+import com.example.bluechat.chat.domain.BluetoothDevice
+import com.example.bluechat.chat.domain.BluetoothMessage
 
 data class BluetoothUiState(
-    val pairedDevices: Set<BluetoothDevice> = emptySet(),
-    val scannedDevices: Set<BluetoothDevice> = emptySet(),
+    val pairedDevices: List<BluetoothDevice> = emptyList(),
+    val scannedDevices: List<BluetoothDevice> = emptyList(),
     val isConnected: Boolean = false,
     val isConnecting: Boolean = false,
     val errorMessage: String? = null,

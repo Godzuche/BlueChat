@@ -1,7 +1,7 @@
-package com.example.bluechat.data
+package com.example.bluechat.chat.data.bluetooth
 
 import android.bluetooth.BluetoothSocket
-import com.example.bluechat.domain.TransferFailedException
+import com.example.bluechat.chat.domain.TransferFailedException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -12,7 +12,7 @@ import java.io.IOException
 class BluetoothDataTransferService(
     private val socket: BluetoothSocket,
 ) {
-    fun listenForIncommingData(): Flow<String> {
+    fun listenForIncomingData(): Flow<String> {
         return flow {
             if (socket.isConnected.not()) {
                 return@flow

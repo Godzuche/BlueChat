@@ -1,4 +1,4 @@
-package com.example.bluechat.domain
+package com.example.bluechat.chat.domain
 
 sealed interface ConnectionResult {
     data object ConnectionEstablished : ConnectionResult

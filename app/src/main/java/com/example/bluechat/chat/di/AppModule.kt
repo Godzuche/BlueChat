@@ -1,8 +1,8 @@
-package com.example.bluechat.di
+package com.example.bluechat.chat.di
 
 import android.content.Context
-import com.example.bluechat.data.AndroidBluetoothController
-import com.example.bluechat.domain.BluetoothController
+import com.example.bluechat.chat.data.bluetooth.AndroidBluetoothController
+import com.example.bluechat.chat.domain.BluetoothController
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

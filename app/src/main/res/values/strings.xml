@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">BlueChat</string>
+    <string name="host_chat">Host Chat</string>
+    <string name="stop">Stop</string>
+    <string name="scan">Scan</string>
+    <string name="hello_world">Hello World!</string>
+    <string name="samsung">Samsung A23</string>
+    <string name="connected_message">"You're connected!"</string>
+    <string name="paired_devices">"Paired Devices"</string>
+    <string name="available_devices">"Available Devices"</string>
+    <string name="no_device_found">"No device found."</string>
+    <string name="messages">Messages</string>
+    <string name="message">Message</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="send_message">Send Message</string>
+    <string name="bluetooth_turned_on_success_message">"Bluetooth successfully turned on."</string>
 </resources>

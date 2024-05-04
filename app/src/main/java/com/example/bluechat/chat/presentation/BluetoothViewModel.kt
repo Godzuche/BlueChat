@@ -1,11 +1,11 @@
-package com.example.bluechat.presentation
+package com.example.bluechat.chat.presentation
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bluechat.domain.BluetoothController
-import com.example.bluechat.domain.BluetoothDevice
-import com.example.bluechat.domain.ConnectionResult
+import com.example.bluechat.chat.domain.BluetoothController
+import com.example.bluechat.chat.domain.BluetoothDevice
+import com.example.bluechat.chat.domain.ConnectionResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -33,8 +33,8 @@ class BluetoothViewModel @Inject constructor(
         _state
     ) { pairedDevices, scannedDevices, state ->
         state.copy(
-            pairedDevices = pairedDevices,
-            scannedDevices = scannedDevices
+            pairedDevices = pairedDevices.toList(),
+            scannedDevices = scannedDevices.toList(),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -79,7 +79,7 @@ class BluetoothViewModel @Inject constructor(
         bluetoothController.stopDiscovery()
     }
 
-    fun listenAndWaitForIncommingConnections() {
+    fun listenAndWaitForIncomingConnections() {
         _state.update { it.copy(isConnecting = true) }
         deviceConnectionJob = bluetoothController
             .startBluetoothServer()
@@ -87,6 +87,7 @@ class BluetoothViewModel @Inject constructor(
     }
 
     fun connectToDevice(device: BluetoothDevice) {
+        Log.d("Connect", "vm")
         _state.update { it.copy(isConnecting = true) }
         deviceConnectionJob = bluetoothController
             .connectToDevice(device)

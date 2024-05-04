@@ -1,4 +1,4 @@
-package com.example.bluechat.domain
+package com.example.bluechat.chat.domain
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
