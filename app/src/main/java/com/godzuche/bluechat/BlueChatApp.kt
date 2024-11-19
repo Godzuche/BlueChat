@@ -34,8 +34,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.bluechat.R
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.chat.presentation.chat.chatRoute
-import com.godzuche.bluechat.chat.presentation.devices.devicesRoute
-import com.godzuche.bluechat.design_system.ui.component.LoadingScreen
+import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
+import com.godzuche.bluechat.core.design_system.ui.component.LoadingScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,4 +1,4 @@
-package com.godzuche.bluechat.chat.data.bluetooth
+package com.godzuche.bluechat.chat.data.mappers
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice

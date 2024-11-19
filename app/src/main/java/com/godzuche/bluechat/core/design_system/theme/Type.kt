@@ -1,4 +1,4 @@
-package com.godzuche.bluechat.design_system.theme
+package com.godzuche.bluechat.core.design_system.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -1,4 +1,4 @@
-package com.godzuche.bluechat.chat.data.bluetooth.util
+package com.godzuche.bluechat.core.data.util
 
 import android.content.Context
 import android.content.pm.PackageManager

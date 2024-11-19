@@ -1,4 +1,4 @@
-package com.godzuche.bluechat.chat.presentation.devices
+package com.godzuche.bluechat.chat.presentation.device_list
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable

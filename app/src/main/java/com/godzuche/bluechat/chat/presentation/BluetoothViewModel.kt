@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,24 +28,39 @@ class BluetoothViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BluetoothUiState())
-    val state: StateFlow<BluetoothUiState> = combine(
-        bluetoothController.pairedDevices,
-        bluetoothController.scannedDevices,
-        _state
-    ) { pairedDevices, scannedDevices, state ->
-        state.copy(
-            pairedDevices = pairedDevices.toList(),
-            scannedDevices = scannedDevices.toList(),
+    val state: StateFlow<BluetoothUiState> = _state
+        .onStart { initData() }
+        /*        combine(
+                bluetoothController.pairedDevices,
+                bluetoothController.scannedDevices,
+                _state,
+            ) { pairedDevices, scannedDevices, state ->
+                state.copy(
+                    pairedDevices = pairedDevices.toList(),
+                    scannedDevices = scannedDevices.toList(),
+                )
+            }*/
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = _state.value
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = _state.value
-    )
 
     private var deviceConnectionJob: Job? = null
 
-    init {
+    private fun initData() {
+        bluetoothController.pairedDevices.onEach { pairedDevices ->
+            _state.update {
+                it.copy(pairedDevices = pairedDevices.toList())
+            }
+        }.launchIn(viewModelScope)
+
+        bluetoothController.scannedDevices.onEach { scannedDevices ->
+            _state.update {
+                it.copy(scannedDevices = scannedDevices.toList())
+            }
+        }
+
         bluetoothController.isConnected.onEach { isConnected ->
             _state.update {
                 it.copy(isConnected = isConnected)

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluechat.R
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
-import com.godzuche.bluechat.design_system.theme.BlueChatTheme
+import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 
 @Composable
 fun ChatMessage(

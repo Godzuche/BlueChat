@@ -6,8 +6,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.godzuche.bluechat.chat.presentation.chat.chatScreen
 import com.godzuche.bluechat.chat.presentation.chat.navigateToChat
-import com.godzuche.bluechat.chat.presentation.devices.devicesRoute
-import com.godzuche.bluechat.chat.presentation.devices.devicesScreen
+import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
+import com.godzuche.bluechat.chat.presentation.device_list.devicesScreen
 
 @Composable
 fun BlueChatNavHost(

@@ -19,9 +19,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.bluechat.R
-import com.godzuche.bluechat.chat.data.bluetooth.util.haveAllPermissions
+import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
-import com.godzuche.bluechat.design_system.theme.BlueChatTheme
+import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

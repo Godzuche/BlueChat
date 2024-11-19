@@ -30,7 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.bluechat.R
 import com.godzuche.bluechat.chat.presentation.BluetoothUiState
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
-import com.godzuche.bluechat.design_system.theme.BlueChatTheme
+import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 
 @Composable
 fun ChatRoute(

@@ -1,4 +1,4 @@
-package com.godzuche.bluechat.chat.presentation.devices
+package com.godzuche.bluechat.chat.presentation.device_list
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -30,8 +30,8 @@ import com.example.bluechat.R
 import com.godzuche.bluechat.chat.domain.BluetoothDevice
 import com.godzuche.bluechat.chat.presentation.BluetoothUiState
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
-import com.godzuche.bluechat.design_system.theme.BlueChatTheme
-import com.godzuche.bluechat.design_system.ui.component.LoadingScreen
+import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
+import com.godzuche.bluechat.core.design_system.ui.component.LoadingScreen
 
 @Composable
 fun DevicesRoute(

@@ -11,7 +11,8 @@ import android.content.Context
 import android.content.IntentFilter
 import android.os.Build
 import android.util.Log
-import com.godzuche.bluechat.chat.data.bluetooth.util.hasPermission
+import com.godzuche.bluechat.chat.data.mappers.toBluetoothDeviceDomain
+import com.godzuche.bluechat.core.data.util.hasPermission
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDeviceDomain
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
