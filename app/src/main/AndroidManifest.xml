@@ -31,7 +31,7 @@
         android:required="true" />
 
     <application
-        android:name=".BlueChatApplication"
+        android:name="com.godzuche.bluechat.BlueChatApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -42,7 +42,7 @@
         android:theme="@style/Theme.BlueChat"
         tools:targetApi="34">
         <activity
-            android:name=".MainActivity"
+            android:name="com.godzuche.bluechat.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.BlueChat">
             <intent-filter>
