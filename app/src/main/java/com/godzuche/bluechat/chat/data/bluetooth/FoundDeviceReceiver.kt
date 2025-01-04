@@ -1,5 +1,6 @@
 package com.godzuche.bluechat.chat.data.bluetooth
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
@@ -12,11 +13,10 @@ class FoundDeviceReceiver(
     private val onDeviceFound: (BluetoothDevice) -> Unit,
     private val onDiscoveryFinished: (Boolean) -> Unit,
 ) : BroadcastReceiver() {
+    @SuppressLint("MissingPermission")
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
             BluetoothDevice.ACTION_FOUND -> {
-                Log.d("BTT", "Found Device")
-
                 val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(
                         BluetoothDevice.EXTRA_DEVICE,
@@ -25,6 +25,8 @@ class FoundDeviceReceiver(
                 } else {
                     intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                 }
+
+                Log.d("BTT", "Found Device: ${device?.uuids}")
 
                 device?.let(onDeviceFound)
             }

@@ -42,7 +42,7 @@ fun ChatRoute(
         state = uiState,
 //        onDisconnect = {},
         onSendMessage = { message ->
-            //
+            bluetoothViewModel.sendMessage(message)
         }
     )
 }

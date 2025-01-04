@@ -59,7 +59,7 @@ class BluetoothViewModel @Inject constructor(
             _state.update {
                 it.copy(scannedDevices = scannedDevices.toList())
             }
-        }
+        }.launchIn(viewModelScope)
 
         bluetoothController.isConnected.onEach { isConnected ->
             _state.update {
@@ -103,6 +103,8 @@ class BluetoothViewModel @Inject constructor(
     }
 
     fun connectToDevice(device: BluetoothDevice) {
+        stopScan()
+
         Log.d("Connect", "vm")
         _state.update { it.copy(isConnecting = true) }
         deviceConnectionJob = bluetoothController

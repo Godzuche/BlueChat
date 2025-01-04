@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -106,6 +108,8 @@ class MainActivity : ComponentActivity() {
                     LocalContext.current.haveAllPermissions(ALL_BT_PERMISSIONS)
                 } else true
 
+            Log.e("BTT", "IsBTEnabled: $isBluetoothEnabledAndPermissionGranted")
+
             LaunchedEffect(key1 = isBluetoothEnabledAndPermissionGranted) {
                 viewModel.updatePairedDevices()
             }
@@ -120,6 +124,41 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private val discoverabilityLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            when (result.resultCode) {
+                RESULT_CANCELED -> {
+                    Log.d("Bluetooth", "Discoverability declined by the user.")
+                }
+
+                else -> {
+                    Log.d("Bluetooth", "Device is discoverable for ${result.resultCode} seconds.")
+                }
+            }
+        }
+
+    private fun makeDeviceDiscoverable(durationInSeconds: Int = 120) { // 2 minutes
+        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, durationInSeconds)
+        }
+        discoverabilityLauncher.launch(discoverableIntent)
+    }
+
+    private fun startDiscoverabilityCountdown(durationInSeconds: Int) {
+        val timer = object : CountDownTimer(durationInSeconds * 1000L, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                val secondsLeft = millisUntilFinished / 1000
+                Log.d("Discoverability", "Discoverable for $secondsLeft seconds")
+            }
+
+            override fun onFinish() {
+                Log.d("Discoverability", "Device is no longer discoverable.")
+            }
+        }
+        timer.start()
+    }
+
 }
 
 val ALL_BT_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -127,6 +166,7 @@ val ALL_BT_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Manifest.permission.BLUETOOTH_CONNECT,
         Manifest.permission.BLUETOOTH_SCAN,
         Manifest.permission.BLUETOOTH_ADVERTISE,
+        Manifest.permission.ACCESS_FINE_LOCATION,
     )
 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
     arrayOf(
@@ -142,3 +182,20 @@ val ALL_BT_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Manifest.permission.BLUETOOTH,
     )
 }
+
+val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    arrayOf(
+        Manifest.permission.BLUETOOTH_SCAN,
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+} else {
+    arrayOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+}
+

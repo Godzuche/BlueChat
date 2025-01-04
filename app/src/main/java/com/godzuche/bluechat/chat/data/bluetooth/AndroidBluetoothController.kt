@@ -7,16 +7,22 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.ParcelUuid
 import android.util.Log
+import androidx.core.content.ContextCompat.registerReceiver
+import com.godzuche.bluechat.ALL_BT_PERMISSIONS
 import com.godzuche.bluechat.chat.data.mappers.toBluetoothDeviceDomain
 import com.godzuche.bluechat.core.data.util.hasPermission
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDeviceDomain
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.domain.ConnectionResult
+import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -79,6 +85,8 @@ class AndroidBluetoothController @Inject constructor(
         onDeviceFound = { foundDevice ->
             _scannedDevices.update { scannedDevices ->
                 val newFoundDevice = foundDevice.toBluetoothDeviceDomain()
+                Log.d("BTT", "Found Device Domain: $newFoundDevice")
+                Log.d("BTT", "Scanned Devices Domain: $scannedDevices")
                 scannedDevices + newFoundDevice
             }
         },
@@ -109,10 +117,19 @@ class AndroidBluetoothController @Inject constructor(
         context.registerReceiver(
             bluetoothStateReceiver,
             IntentFilter().apply {
+                addAction(BluetoothAdapter.ACTION_STATE_CHANGED) // For bluetooth switch state changes
                 addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
                 addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
                 addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
             }
+        )
+        context.registerReceiver(
+            foundDeviceReceiver,
+            IntentFilter().apply {
+                addAction(BluetoothDevice.ACTION_FOUND)
+                addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+                addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+            },
         )
     }
 
@@ -128,20 +145,20 @@ class AndroidBluetoothController @Inject constructor(
             emptySet()
         }
 
-        context.registerReceiver(
-            foundDeviceReceiver,
-            IntentFilter().apply {
-                addAction(BluetoothDevice.ACTION_FOUND)
-                addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-                addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-            },
-        )
+//        context.registerReceiver(
+//            foundDeviceReceiver,
+//            IntentFilter().apply {
+//                addAction(BluetoothDevice.ACTION_FOUND)
+//                addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+//                addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+//            },
+//        )
 
         updatePairedDevices()
 
-        if (bluetoothAdapter?.isDiscovering == true) {
-            stopDiscovery()
-        }
+//        if (bluetoothAdapter?.isDiscovering == true) {
+        stopDiscovery()
+//        }
 
         bluetoothAdapter?.startDiscovery()
     }
@@ -170,8 +187,20 @@ class AndroidBluetoothController @Inject constructor(
             return
         }
 
-        bluetoothAdapter?.cancelDiscovery()
+        if (bluetoothAdapter?.isDiscovering == true) {
+            bluetoothAdapter?.cancelDiscovery()
+        }
     }
+
+//    private fun startDiscovery2() {
+//        if (checkPermissions()) {
+//            if (bluetoothAdapter?.isDiscovering == false) {
+//                bluetoothAdapter?.startDiscovery()
+//            }
+//        } else {
+//            requestPermissions()
+//        }
+//    }
 
     @SuppressLint("MissingPermission")
     override fun startBluetoothServer(): Flow<ConnectionResult> {
@@ -302,4 +331,105 @@ class AndroidBluetoothController @Inject constructor(
         const val SERVICE_UUID = "27b7d1da-08c7-4505-a6d1-2459987e5e2d"
         const val SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
     }
+
+
+    @SuppressLint("MissingPermission")
+    private fun pairDevice(device: BluetoothDevice) {
+        if (context.haveAllPermissions(ALL_BT_PERMISSIONS)) {
+            try {
+                val method = device.javaClass.getMethod("createBond")
+                method.invoke(device)
+                Log.d("BluetoothPairing", "Pairing initiated with ${device.name}")
+            } catch (e: Exception) {
+                Log.e("BluetoothPairing", "Error initiating pairing", e)
+            }
+        } else {
+//        requestPermissions()
+        }
+    }
+
+    private val pairingReceiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                    val device: BluetoothDevice? =
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    when (device?.bondState) {
+                        BluetoothDevice.BOND_BONDED -> Log.d(
+                            "Pairing",
+                            "Device paired: ${device.name}"
+                        )
+
+                        BluetoothDevice.BOND_BONDING -> Log.d(
+                            "Pairing",
+                            "Pairing in progress: ${device.name}"
+                        )
+
+                        BluetoothDevice.BOND_NONE -> Log.d(
+                            "Pairing",
+                            "Pairing failed or unpaired: ${device.name}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+// Register and unregister the receiver
+//private fun registerPairingReceiver() {
+//    val filter = IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+//    context.registerReceiver(pairingReceiver, filter)
+//}
+
+    private val bluetoothDiscoverabilityStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.action) {
+                BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
+                    val mode =
+                        intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR)
+                    when (mode) {
+                        BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE -> {
+                            Log.d("Bluetooth", "Device is discoverable.")
+                        }
+
+                        BluetoothAdapter.SCAN_MODE_CONNECTABLE -> {
+                            Log.d("Bluetooth", "Device is connectable but not discoverable.")
+                        }
+
+                        BluetoothAdapter.SCAN_MODE_NONE -> {
+                            Log.d("Bluetooth", "Device is neither connectable nor discoverable.")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun registerBluetoothStateReceiver() {
+        val filter = IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
+        context.registerReceiver(bluetoothDiscoverabilityStateReceiver, filter)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun fetchDeviceUuids(device: BluetoothDevice) {
+        device.fetchUuidsWithSdp() // Initiates the UUID fetch
+
+        val uuidReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (BluetoothDevice.ACTION_UUID == intent.action) {
+                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val uuids: Array<ParcelUuid>? = intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID) as? Array<ParcelUuid>
+                    uuids?.forEach { uuid ->
+                        Log.d("BluetoothUUID", "Device: ${device?.name}, UUID: ${uuid.uuid}")
+                    }
+                }
+            }
+        }
+
+        // Register the receiver
+        val filter = IntentFilter(BluetoothDevice.ACTION_UUID)
+        context.registerReceiver(uuidReceiver, filter)
+    }
+
 }
