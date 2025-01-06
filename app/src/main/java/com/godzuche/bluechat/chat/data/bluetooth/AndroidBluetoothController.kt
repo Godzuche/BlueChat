@@ -99,11 +99,18 @@ class AndroidBluetoothController @Inject constructor(
     @SuppressLint("MissingPermission")
     private val bluetoothStateReceiver = BluetoothStateReceiver(
         onStateChange = { isConnected, bluetoothDevice ->
-            if (bluetoothAdapter?.bondedDevices?.contains(bluetoothDevice) == true) {
-                _isConnected.update { isConnected }
-            } else {
-                CoroutineScope(Dispatchers.IO).launch {
-                    _error.tryEmit("Can't connect to non-paired device")
+            when(isConnected){
+                true -> {
+                    if (bluetoothAdapter?.bondedDevices?.contains(bluetoothDevice) == true) {
+                        _isConnected.update { true }
+                    } else {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            _error.tryEmit("Can't connect to non-paired device")
+                        }
+                    }
+                }
+                false -> {
+                    _isConnected.update { false }
                 }
             }
         }
@@ -239,6 +246,7 @@ class AndroidBluetoothController @Inject constructor(
                                 ConnectionResult.TransferSucceeded(it)
                             }
                     )
+                    shouldLoop = false
                 }
             }
 
@@ -292,10 +300,14 @@ class AndroidBluetoothController @Inject constructor(
     }
 
     override fun closeConnection() {
-        currentClientSocket?.close()
-        currentClientSocket = null
-        currentServerSocket?.close()
-        currentServerSocket = null
+        try {
+            currentClientSocket?.close()
+//            currentClientSocket = null
+            currentServerSocket?.close()
+//            currentServerSocket = null
+        } catch (e: IOException){
+            Log.e("BTT", "Could not close the connect socket", e)
+        }
     }
 
     override fun release() {

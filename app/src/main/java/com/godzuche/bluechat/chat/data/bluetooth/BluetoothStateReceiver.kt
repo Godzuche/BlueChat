@@ -32,6 +32,13 @@ class BluetoothStateReceiver(
                 val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
                 val isBluetoothEnabled = (state == BluetoothAdapter.STATE_ON)
                 Log.d("BTT", "Bluetooth enabled: $isBluetoothEnabled")
+
+                when (state) {
+                    BluetoothAdapter.STATE_TURNING_ON -> {}
+                    BluetoothAdapter.STATE_ON -> {}
+                    BluetoothAdapter.STATE_TURNING_OFF -> {}
+                    BluetoothAdapter.STATE_OFF -> {}
+                }
             }
         }
     }

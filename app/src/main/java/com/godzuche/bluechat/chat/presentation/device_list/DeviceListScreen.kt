@@ -41,7 +41,7 @@ fun DevicesRoute(
     val uiState by bluetoothViewModel.state.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(key1 = uiState.isConnected) {
+    /*LaunchedEffect(key1 = uiState.isConnected) {
         if (uiState.isConnected) {
             Toast.makeText(
                 context,
@@ -57,7 +57,7 @@ fun DevicesRoute(
         uiState.errorMessage?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
-    }
+    }*/
 
     DevicesScreen(
         uiState = uiState,
