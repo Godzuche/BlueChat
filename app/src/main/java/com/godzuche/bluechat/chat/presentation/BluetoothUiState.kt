@@ -11,5 +11,6 @@ data class BluetoothUiState(
     val errorMessage: String? = null,
     val isDiscovering: Boolean = false,
     val isDiscoveringFinished: Boolean = false,
+    val messageInput: String = "",
     val messages: List<BluetoothMessage> = emptyList(),
 )

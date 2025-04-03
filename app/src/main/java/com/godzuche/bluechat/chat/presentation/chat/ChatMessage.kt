@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,19 +34,28 @@ fun ChatMessage(
                 )
             )
             .background(
-                if (message.isFromLocalUser) Color.Red else Color.Blue
+                if (message.isFromLocalUser) {
+                    MaterialTheme.colorScheme.primary
+                } else MaterialTheme.colorScheme.surfaceContainer
             )
-            .padding(16.dp),
+            .padding(12.dp),
     ) {
         Text(
             text = message.senderName,
             fontSize = 10.sp,
-            color = Color.Black
+            style = MaterialTheme.typography.labelSmall,
+            color = if (message.isFromLocalUser) {
+                MaterialTheme.colorScheme.onPrimary
+            } else MaterialTheme.colorScheme.onSurface,
         )
+
         Text(
             text = message.message,
-            color = Color.Black,
-            modifier = Modifier.widthIn(max = 250.dp)
+            modifier = Modifier.widthIn(max = 250.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (message.isFromLocalUser) {
+                MaterialTheme.colorScheme.onPrimary
+            } else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -59,7 +68,7 @@ fun MessagePreview() {
             message = BluetoothMessage(
                 message = stringResource(id = R.string.hello_world),
                 senderName = stringResource(id = R.string.samsung),
-                isFromLocalUser = false,
+                isFromLocalUser = true,
             )
         )
     }

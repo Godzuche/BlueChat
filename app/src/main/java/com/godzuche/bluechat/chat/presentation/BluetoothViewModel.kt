@@ -7,17 +7,15 @@ import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDevice
 import com.godzuche.bluechat.chat.domain.ConnectionResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,17 +26,16 @@ class BluetoothViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BluetoothUiState())
-    val state: StateFlow<BluetoothUiState> = _state
-        .onStart { initData() }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = _state.value,
-        )
+    val state: StateFlow<BluetoothUiState> = _state.asStateFlow()
 
     private var deviceConnectionJob: Job? = null
 
-    private fun initData() {
+    init {
+        initData()
+    }
+
+    fun initData() {
+//        viewModelScope.launch(Dispatchers.Default) {
         bluetoothController.pairedDevices.onEach { pairedDevices ->
             _state.update {
                 it.copy(pairedDevices = pairedDevices.toList())
@@ -53,7 +50,10 @@ class BluetoothViewModel @Inject constructor(
 
         bluetoothController.isConnected.onEach { isConnected ->
             _state.update {
-                it.copy(isConnected = isConnected)
+                it.copy(
+                    isConnected = isConnected,
+//                    messages = if(isConnected) it.messages else emptyList(),
+                )
             }
         }.launchIn(viewModelScope)
 
@@ -75,6 +75,7 @@ class BluetoothViewModel @Inject constructor(
                 it.copy(isDiscoveringFinished = isFinished)
             }
         }.launchIn(viewModelScope)
+//        }
     }
 
     fun startScan() {
@@ -114,13 +115,24 @@ class BluetoothViewModel @Inject constructor(
         bluetoothController.updatePairedDevices()
     }
 
-    fun sendMessage(messages: String) {
+    fun onMessageInputChange(input: String) {
         viewModelScope.launch {
-            val bluetoothMessage = bluetoothController.trySendMessage(messages)
-            if (bluetoothMessage != null) {
+            _state.update {
+                it.copy(messageInput = input.trim())
+            }
+        }
+    }
+
+    fun sendMessage() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val message = state.value.messageInput
+            val sentMessage = bluetoothController.trySendMessage(message)
+            Log.d("Chat", "bluetoothMessage vm: $sentMessage")
+            if (sentMessage != null) {
                 _state.update {
                     it.copy(
-                        messages = it.messages + bluetoothMessage
+                        messages = it.messages + sentMessage,
+                        messageInput = "",
                     )
                 }
             }
@@ -129,6 +141,7 @@ class BluetoothViewModel @Inject constructor(
 
     private fun Flow<ConnectionResult>.listen(): Job {
         return onEach { result ->
+
             when (result) {
                 ConnectionResult.ConnectionEstablished -> {
                     _state.update {
@@ -151,7 +164,14 @@ class BluetoothViewModel @Inject constructor(
                 }
 
                 is ConnectionResult.TransferSucceeded -> {
-                    //
+                    Log.d("Chat", "Received: ${result.message}")
+                    _state.update {
+                        val messages = it.messages + result.message
+                        it.copy(
+                            messages = messages
+                        )
+                    }
+                    Log.d("Chat", "messages: ${state.value.messages}")
                 }
 
             }

@@ -8,6 +8,10 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 
+/**
+ * Real-time update of bluetooth state used to react to bluetooth switch state changes
+ * and connection state changes
+ * */
 class BluetoothStateReceiver(
     private val onStateChange: (isConnected: Boolean, BluetoothDevice) -> Unit,
 ) : BroadcastReceiver() {

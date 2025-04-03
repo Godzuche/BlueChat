@@ -101,6 +101,7 @@ fun BlueChatApp(
 
                 else -> {
                     Log.d("Bluetooth", "Device is discoverable for ${result.resultCode} seconds.")
+                    startDiscoverabilityCountdown(durationInSeconds = 60)
                 }
             }
         }
@@ -194,7 +195,10 @@ fun BlueChatApp(
                 .padding(it)
                 .consumeWindowInsets(it),
         ) {
-            BlueChatNavHost(navController = navController)
+            BlueChatNavHost(
+                bluetoothViewModel = bluetoothViewModel,
+                navController = navController,
+            )
         }
 
         if (uiState.isConnecting) {
@@ -203,20 +207,18 @@ fun BlueChatApp(
 
     }
 
+}
 
-
-    fun startDiscoverabilityCountdown(durationInSeconds: Int) {
-        val timer = object : CountDownTimer(durationInSeconds * 1000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val secondsLeft = millisUntilFinished / 1000
-                Log.d("Discoverability", "Discoverable for $secondsLeft seconds")
-            }
-
-            override fun onFinish() {
-                Log.d("Discoverability", "Device is no longer discoverable.")
-            }
+fun startDiscoverabilityCountdown(durationInSeconds: Int) {
+    val timer = object : CountDownTimer(durationInSeconds * 1000L, 1000L) {
+        override fun onTick(millisUntilFinished: Long) {
+            val secondsLeft = millisUntilFinished / 1000
+            Log.d("Discoverability", "Discoverable for $secondsLeft seconds")
         }
-        timer.start()
-    }
 
+        override fun onFinish() {
+            Log.d("Discoverability", "Device is no longer discoverable.")
+        }
+    }
+    timer.start()
 }

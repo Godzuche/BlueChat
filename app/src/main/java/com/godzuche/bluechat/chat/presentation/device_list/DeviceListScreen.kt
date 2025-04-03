@@ -1,6 +1,5 @@
 package com.godzuche.bluechat.chat.presentation.device_list
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,42 +29,17 @@ import com.godzuche.bluechat.chat.domain.BluetoothDevice
 import com.godzuche.bluechat.chat.presentation.BluetoothUiState
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
-import com.godzuche.bluechat.core.design_system.ui.component.LoadingScreen
 
 @Composable
 fun DevicesRoute(
-    navigateToChat: () -> Unit,
     bluetoothViewModel: BluetoothViewModel = hiltViewModel(),
 ) {
     val uiState by bluetoothViewModel.state.collectAsState()
-    val context = LocalContext.current
-
-    /*LaunchedEffect(key1 = uiState.isConnected) {
-        if (uiState.isConnected) {
-            Toast.makeText(
-                context,
-                R.string.connected_message,
-                Toast.LENGTH_LONG,
-            ).show()
-
-            navigateToChat()
-        }
-    }
-
-    LaunchedEffect(key1 = uiState.errorMessage) {
-        uiState.errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        }
-    }*/
 
     DevicesScreen(
         uiState = uiState,
         onDeviceClick = bluetoothViewModel::connectToDevice,
     )
-
-    if (uiState.isConnecting) {
-        LoadingScreen(modifier = Modifier.fillMaxSize())
-    }
 }
 
 @Composable
@@ -105,23 +78,26 @@ fun DevicesScreen(
             items(
                 items = uiState.scannedDevices,
                 span = { GridItemSpan(maxLineSpan) },
+                key = { it.hardwareAddress + it.name },
             ) { device ->
                 val deviceIndex = uiState.scannedDevices.indexOf(device)
+                val shape = RoundedCornerShape(
+                    topStart = if (deviceIndex == 0) 8.dp else 0.dp,
+                    topEnd = if (deviceIndex == 0) 8.dp else 0.dp,
+                    bottomStart = if (deviceIndex == uiState.scannedDevices.lastIndex) 8.dp else 0.dp,
+                    bottomEnd = if (deviceIndex == uiState.scannedDevices.lastIndex) 8.dp else 0.dp,
+                )
 
                 Text(
                     text = device.name ?: device.hardwareAddress,
                     modifier = Modifier
                         .animateItem()
                         .fillMaxWidth()
+                        .clip(shape)
                         .clickable { onDeviceClick(device) }
                         .background(
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(
-                                topStart = if (deviceIndex == 0) 8.dp else 0.dp,
-                                topEnd = if (deviceIndex == 0) 8.dp else 0.dp,
-                                bottomStart = if (deviceIndex == uiState.scannedDevices.lastIndex) 8.dp else 0.dp,
-                                bottomEnd = if (deviceIndex == uiState.scannedDevices.lastIndex) 8.dp else 0.dp,
-                            )
+//                            shape = shape,
                         )
                         .padding(20.dp),
                 )
@@ -139,6 +115,7 @@ fun DevicesScreen(
         items(
             items = uiState.pairedDevices.toList(),
             span = { GridItemSpan(maxLineSpan) },
+            key = { it.hardwareAddress + it.name },
         ) { device ->
             Text(
                 text = device.name ?: device.hardwareAddress,
@@ -157,6 +134,38 @@ fun DevicesScreen(
 @Composable
 fun DevicesScreenPreview() {
     BlueChatTheme {
-        DevicesScreen(uiState = BluetoothUiState(), onDeviceClick = {})
+        DevicesScreen(
+            uiState = BluetoothUiState()
+                .copy(
+                    pairedDevices = previewPairedDevices,
+                    scannedDevices = previewAvailableDevices,
+                ),
+            onDeviceClick = {},
+        )
     }
 }
+
+private val previewPairedDevices = listOf(
+    BluetoothDevice(
+        uuid = null,
+        name = "John Doe",
+        "62:B4:FD:BO:CO:06",
+    ),
+    BluetoothDevice(
+        uuid = null,
+        name = "God'swill Jonathan",
+        "72:B4:FD:BO:CO:06",
+    ),
+)
+private val previewAvailableDevices = listOf(
+    BluetoothDevice(
+        uuid = null,
+        name = "Samsung s22",
+        "B3:B4:F5:BO:CO:06",
+    ),
+    BluetoothDevice(
+        uuid = null,
+        name = null,
+        "D0:5D:FD:BO:CO:06",
+    ),
+)

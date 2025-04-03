@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
@@ -14,14 +15,15 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
-import androidx.core.content.ContextCompat.registerReceiver
 import com.godzuche.bluechat.ALL_BT_PERMISSIONS
 import com.godzuche.bluechat.chat.data.mappers.toBluetoothDeviceDomain
-import com.godzuche.bluechat.core.data.util.hasPermission
+import com.godzuche.bluechat.chat.data.mappers.toBluetoothMessage
+import com.godzuche.bluechat.chat.data.mappers.toByteArray
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDeviceDomain
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.domain.ConnectionResult
+import com.godzuche.bluechat.core.data.util.hasPermission
 import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,7 +101,7 @@ class AndroidBluetoothController @Inject constructor(
     @SuppressLint("MissingPermission")
     private val bluetoothStateReceiver = BluetoothStateReceiver(
         onStateChange = { isConnected, bluetoothDevice ->
-            when(isConnected){
+            when (isConnected) {
                 true -> {
                     if (bluetoothAdapter?.bondedDevices?.contains(bluetoothDevice) == true) {
                         _isConnected.update { true }
@@ -109,6 +111,7 @@ class AndroidBluetoothController @Inject constructor(
                         }
                     }
                 }
+
                 false -> {
                     _isConnected.update { false }
                 }
@@ -242,8 +245,10 @@ class AndroidBluetoothController @Inject constructor(
                     emitAll(
                         service
                             .listenForIncomingData()
-                            .map {
-                                ConnectionResult.TransferSucceeded(it)
+                            .map { data ->
+                                ConnectionResult.TransferSucceeded(
+                                    data.toBluetoothMessage(isFromLocalUser = false)
+                                )
                             }
                     )
                     shouldLoop = false
@@ -283,9 +288,12 @@ class AndroidBluetoothController @Inject constructor(
                     emit(ConnectionResult.ConnectionEstablished)
                     BluetoothDataTransferService(socket).also {
                         dataTransferService = it
-                        emitAll(it.listenForIncomingData().map { data ->
-                            ConnectionResult.TransferSucceeded(data)
-                        })
+                        emitAll(
+                            it.listenForIncomingData().map { data ->
+                                ConnectionResult.TransferSucceeded(
+                                    data.toBluetoothMessage(isFromLocalUser = false)
+                                )
+                            })
                     }
                 } catch (e: IOException) {
                     socket.close()
@@ -305,7 +313,7 @@ class AndroidBluetoothController @Inject constructor(
 //            currentClientSocket = null
             currentServerSocket?.close()
 //            currentServerSocket = null
-        } catch (e: IOException){
+        } catch (e: IOException) {
             Log.e("BTT", "Could not close the connect socket", e)
         }
     }
@@ -330,11 +338,12 @@ class AndroidBluetoothController @Inject constructor(
 
         val bluetoothMessage = BluetoothMessage(
             message = message,
-            senderName = bluetoothAdapter?.name ?: "Unknown name",
-            isFromLocalUser = true
+            senderName = bluetoothAdapter?.name ?: "Unknown Name",
+            isFromLocalUser = true,
         )
 
-        dataTransferService?.sendMessage(message.toByteArray())
+        val result = dataTransferService?.sendMessage(bluetoothMessage.toByteArray())
+        Log.d("Chat", "trySendMessage result: $result")
 
         return bluetoothMessage
     }
@@ -430,8 +439,10 @@ class AndroidBluetoothController @Inject constructor(
         val uuidReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (BluetoothDevice.ACTION_UUID == intent.action) {
-                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    val uuids: Array<ParcelUuid>? = intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID) as? Array<ParcelUuid>
+                    val device: BluetoothDevice? =
+                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                    val uuids: Array<ParcelUuid>? =
+                        intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID) as? Array<ParcelUuid>
                     uuids?.forEach { uuid ->
                         Log.d("BluetoothUUID", "Device: ${device?.name}, UUID: ${uuid.uuid}")
                     }
@@ -444,4 +455,55 @@ class AndroidBluetoothController @Inject constructor(
         context.registerReceiver(uuidReceiver, filter)
     }
 
+}
+
+/**
+ * Immediate bluetooth connection check
+ * to determine if a device is connected
+ * */
+private fun isBluetoothConnected(context: Context): Boolean {
+    val bluetoothManager by lazy {
+        context.getSystemService(BluetoothManager::class.java)
+    }
+    val bluetoothAdapter by lazy {
+        bluetoothManager?.adapter
+    }
+    if (bluetoothAdapter == null || !bluetoothAdapter!!.isEnabled) {
+        return false // Bluetooth is off or not supported
+    }
+
+    // Check connected devices for specific profiles
+    val profiles = listOf(
+        BluetoothProfile.HEADSET,
+        BluetoothProfile.A2DP,
+        BluetoothProfile.GATT
+    )
+
+    for (profile in profiles) {
+        val connectedDevices = context.getConnectedDevicesForProfile(profile)
+        if (connectedDevices.isNotEmpty()) {
+            return true // At least one device is connected
+        }
+    }
+
+    return false // No devices connected
+}
+
+private fun Context.getConnectedDevicesForProfile(profile: Int): List<BluetoothDevice> {
+    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+    val connectedDevices = mutableListOf<BluetoothDevice>()
+
+    val serviceListener = object : BluetoothProfile.ServiceListener {
+        override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
+            connectedDevices.addAll(proxy.connectedDevices)
+            bluetoothAdapter.closeProfileProxy(profile, proxy)
+        }
+
+        override fun onServiceDisconnected(profile: Int) {
+            // Handle disconnection if needed
+        }
+    }
+
+    bluetoothAdapter.getProfileProxy(this, serviceListener, profile)
+    return connectedDevices
 }
