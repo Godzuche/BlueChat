@@ -115,7 +115,7 @@ fun DevicesScreen(
         items(
             items = uiState.pairedDevices.toList(),
             span = { GridItemSpan(maxLineSpan) },
-            key = { it.hardwareAddress + it.name },
+            key = { it.hardwareAddress + it.name + "dup" },
         ) { device ->
             Text(
                 text = device.name ?: device.hardwareAddress,
