@@ -7,7 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
+import com.godzuche.bluechat.core.presentation.util.debugLog
 
 class FoundDeviceReceiver(
     private val onDeviceFound: (BluetoothDevice) -> Unit,
@@ -26,7 +26,7 @@ class FoundDeviceReceiver(
                     intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                 }
 
-                Log.d("BTT", "Found Device: ${device?.uuids}")
+                debugLog { "BTT Found Device: ${device?.uuids}" }
 
                 device?.let(onDeviceFound)
             }

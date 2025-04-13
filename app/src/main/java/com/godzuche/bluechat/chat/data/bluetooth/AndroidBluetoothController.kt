@@ -25,6 +25,7 @@ import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.domain.ConnectionResult
 import com.godzuche.bluechat.core.data.util.hasPermission
 import com.godzuche.bluechat.core.data.util.haveAllPermissions
+import com.godzuche.bluechat.core.presentation.util.debugLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -87,8 +88,8 @@ class AndroidBluetoothController @Inject constructor(
         onDeviceFound = { foundDevice ->
             _scannedDevices.update { scannedDevices ->
                 val newFoundDevice = foundDevice.toBluetoothDeviceDomain()
-                Log.d("BTT", "Found Device Domain: $newFoundDevice")
-                Log.d("BTT", "Scanned Devices Domain: $scannedDevices")
+                debugLog { "BTT Found Device Domain: $newFoundDevice" }
+                debugLog { "BTT Scanned Devices Domain: $scannedDevices" }
                 scannedDevices + newFoundDevice
             }
         },
@@ -270,21 +271,21 @@ class AndroidBluetoothController @Inject constructor(
             val bluetoothDevice by lazy {
                 bluetoothAdapter?.getRemoteDevice(device.hardwareAddress)
             }
-            Log.d("Connect", "uuid: ${device.uuid}")
+            debugLog { "Connect uuid: ${device.uuid}" }
             currentClientSocket = bluetoothDevice?.createRfcommSocketToServiceRecord(
                 UUID.fromString(SERVICE_UUID)
             )
-            Log.d(
-                "Connect",
-                if (currentClientSocket == null) "cl socket null" else "cl socket not null"
-            )
+            debugLog {
+                "Connect" +
+                        if (currentClientSocket == null) "cl socket null" else "cl socket not null"
+            }
 
             stopDiscovery()
 
             currentClientSocket?.let { socket ->
                 try {
                     socket.connect()
-                    Log.d("Connect", "connection established")
+                    debugLog { "Connect connection established" }
                     emit(ConnectionResult.ConnectionEstablished)
                     BluetoothDataTransferService(socket).also {
                         dataTransferService = it
@@ -299,7 +300,7 @@ class AndroidBluetoothController @Inject constructor(
                     socket.close()
                     currentClientSocket = null
                     e.printStackTrace()
-                    Log.d("Connect", "connection error: ${e.localizedMessage}")
+                    debugLog { "Connect connection error: ${e.localizedMessage}" }
                     emit(ConnectionResult.Error("Connection was interrupted \n " + e.localizedMessage))
                 }
             }
@@ -343,7 +344,7 @@ class AndroidBluetoothController @Inject constructor(
         )
 
         val result = dataTransferService?.sendMessage(bluetoothMessage.toByteArray())
-        Log.d("Chat", "trySendMessage result: $result")
+        debugLog { "Chat trySendMessage result: $result" }
 
         return bluetoothMessage
     }
@@ -360,7 +361,7 @@ class AndroidBluetoothController @Inject constructor(
             try {
                 val method = device.javaClass.getMethod("createBond")
                 method.invoke(device)
-                Log.d("BluetoothPairing", "Pairing initiated with ${device.name}")
+                debugLog { "BluetoothPairing Pairing initiated with ${device.name}" }
             } catch (e: Exception) {
                 Log.e("BluetoothPairing", "Error initiating pairing", e)
             }
@@ -377,20 +378,9 @@ class AndroidBluetoothController @Inject constructor(
                     val device: BluetoothDevice? =
                         intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     when (device?.bondState) {
-                        BluetoothDevice.BOND_BONDED -> Log.d(
-                            "Pairing",
-                            "Device paired: ${device.name}"
-                        )
-
-                        BluetoothDevice.BOND_BONDING -> Log.d(
-                            "Pairing",
-                            "Pairing in progress: ${device.name}"
-                        )
-
-                        BluetoothDevice.BOND_NONE -> Log.d(
-                            "Pairing",
-                            "Pairing failed or unpaired: ${device.name}"
-                        )
+                        BluetoothDevice.BOND_BONDED -> debugLog { "Pairing Device paired: ${device.name}" }
+                        BluetoothDevice.BOND_BONDING -> debugLog { "Pairing Pairing in progress: ${device.name}" }
+                        BluetoothDevice.BOND_NONE -> debugLog { "Pairing Pairing failed or unpaired: ${device.name}" }
                     }
                 }
             }
@@ -403,33 +393,41 @@ class AndroidBluetoothController @Inject constructor(
 //    context.registerReceiver(pairingReceiver, filter)
 //}
 
-    private val bluetoothDiscoverabilityStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
-                    val mode =
-                        intent.getIntExtra(BluetoothAdapter.EXTRA_SCAN_MODE, BluetoothAdapter.ERROR)
-                    when (mode) {
-                        BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE -> {
-                            Log.d("Bluetooth", "Device is discoverable.")
-                        }
+    private val bluetoothDiscoverabilityStateReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                when (intent.action) {
+                    BluetoothAdapter.ACTION_SCAN_MODE_CHANGED -> {
+                        val mode =
+                            intent.getIntExtra(
+                                BluetoothAdapter.EXTRA_SCAN_MODE,
+                                BluetoothAdapter.ERROR
+                            )
+                        when (mode) {
+                            BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE -> {
+                                debugLog { "Bluetooth Device is discoverable." }
+                            }
 
-                        BluetoothAdapter.SCAN_MODE_CONNECTABLE -> {
-                            Log.d("Bluetooth", "Device is connectable but not discoverable.")
-                        }
+                            BluetoothAdapter.SCAN_MODE_CONNECTABLE -> {
+                                debugLog { "Bluetooth Device is connectable but not discoverable." }
+                            }
 
-                        BluetoothAdapter.SCAN_MODE_NONE -> {
-                            Log.d("Bluetooth", "Device is neither connectable nor discoverable.")
+                            BluetoothAdapter.SCAN_MODE_NONE -> {
+                                debugLog { "Bluetooth Device is neither connectable nor discoverable." }
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
     private fun registerBluetoothStateReceiver() {
-        val filter = IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
-        context.registerReceiver(bluetoothDiscoverabilityStateReceiver, filter)
+        val filter =
+            IntentFilter(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED)
+        context.registerReceiver(
+            bluetoothDiscoverabilityStateReceiver,
+            filter
+        )
     }
 
     @SuppressLint("MissingPermission")
@@ -437,21 +435,29 @@ class AndroidBluetoothController @Inject constructor(
         device.fetchUuidsWithSdp() // Initiates the UUID fetch
 
         val uuidReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
+            override fun onReceive(
+                context: Context,
+                intent: Intent,
+            ) {
                 if (BluetoothDevice.ACTION_UUID == intent.action) {
                     val device: BluetoothDevice? =
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        intent.getParcelableExtra(
+                            BluetoothDevice.EXTRA_DEVICE
+                        )
                     val uuids: Array<ParcelUuid>? =
-                        intent.getParcelableArrayExtra(BluetoothDevice.EXTRA_UUID) as? Array<ParcelUuid>
+                        intent.getParcelableArrayExtra(
+                            BluetoothDevice.EXTRA_UUID
+                        ) as? Array<ParcelUuid>
                     uuids?.forEach { uuid ->
-                        Log.d("BluetoothUUID", "Device: ${device?.name}, UUID: ${uuid.uuid}")
+                        debugLog { "BluetoothUUID Device: ${device?.name}, UUID: ${uuid.uuid}" }
                     }
                 }
             }
         }
 
         // Register the receiver
-        val filter = IntentFilter(BluetoothDevice.ACTION_UUID)
+        val filter =
+            IntentFilter(BluetoothDevice.ACTION_UUID)
         context.registerReceiver(uuidReceiver, filter)
     }
 
@@ -480,7 +486,10 @@ private fun isBluetoothConnected(context: Context): Boolean {
     )
 
     for (profile in profiles) {
-        val connectedDevices = context.getConnectedDevicesForProfile(profile)
+        val connectedDevices =
+            context.getConnectedDevicesForProfile(
+                profile
+            )
         if (connectedDevices.isNotEmpty()) {
             return true // At least one device is connected
         }
@@ -489,21 +498,36 @@ private fun isBluetoothConnected(context: Context): Boolean {
     return false // No devices connected
 }
 
-private fun Context.getConnectedDevicesForProfile(profile: Int): List<BluetoothDevice> {
-    val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-    val connectedDevices = mutableListOf<BluetoothDevice>()
+private fun Context.getConnectedDevicesForProfile(
+    profile: Int,
+): List<BluetoothDevice> {
+    val bluetoothAdapter =
+        BluetoothAdapter.getDefaultAdapter()
+    val connectedDevices =
+        mutableListOf<BluetoothDevice>()
 
-    val serviceListener = object : BluetoothProfile.ServiceListener {
-        override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
-            connectedDevices.addAll(proxy.connectedDevices)
-            bluetoothAdapter.closeProfileProxy(profile, proxy)
+    val serviceListener =
+        object : BluetoothProfile.ServiceListener {
+            override fun onServiceConnected(
+                profile: Int,
+                proxy: BluetoothProfile,
+            ) {
+                connectedDevices.addAll(proxy.connectedDevices)
+                bluetoothAdapter.closeProfileProxy(
+                    profile,
+                    proxy
+                )
+            }
+
+            override fun onServiceDisconnected(profile: Int) {
+                // Handle disconnection if needed
+            }
         }
 
-        override fun onServiceDisconnected(profile: Int) {
-            // Handle disconnection if needed
-        }
-    }
-
-    bluetoothAdapter.getProfileProxy(this, serviceListener, profile)
+    bluetoothAdapter.getProfileProxy(
+        this,
+        serviceListener,
+        profile
+    )
     return connectedDevices
 }

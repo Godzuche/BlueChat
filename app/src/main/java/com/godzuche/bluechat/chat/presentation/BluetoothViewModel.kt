@@ -1,11 +1,11 @@
 package com.godzuche.bluechat.chat.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDevice
 import com.godzuche.bluechat.chat.domain.ConnectionResult
+import com.godzuche.bluechat.core.presentation.util.debugLog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,7 +58,7 @@ class BluetoothViewModel @Inject constructor(
         }.launchIn(viewModelScope)
 
         bluetoothController.error.onEach { error ->
-            Log.d("BT", "error: $error")
+            debugLog { "BT error: $error" }
             _state.update {
                 it.copy(errorMessage = error)
             }
@@ -96,7 +96,7 @@ class BluetoothViewModel @Inject constructor(
     fun connectToDevice(device: BluetoothDevice) {
         stopScan()
 
-        Log.d("Connect", "vm")
+        debugLog { "Connect vm" }
         _state.update { it.copy(isConnecting = true) }
         deviceConnectionJob = bluetoothController
             .connectToDevice(device)
@@ -127,7 +127,7 @@ class BluetoothViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val message = state.value.messageInput.trim()
             val sentMessage = bluetoothController.trySendMessage(message)
-            Log.d("Chat", "bluetoothMessage vm: $sentMessage")
+            debugLog { "Chat bluetoothMessage vm: $sentMessage" }
             if (sentMessage != null) {
                 _state.update {
                     it.copy(
@@ -164,14 +164,14 @@ class BluetoothViewModel @Inject constructor(
                 }
 
                 is ConnectionResult.TransferSucceeded -> {
-                    Log.d("Chat", "Received: ${result.message}")
+                    debugLog { "Chat Received: ${result.message}" }
                     _state.update {
                         val messages = it.messages + result.message
                         it.copy(
                             messages = messages
                         )
                     }
-                    Log.d("Chat", "messages: ${state.value.messages}")
+                    debugLog { "Chat messages: ${state.value.messages}" }
                 }
 
             }

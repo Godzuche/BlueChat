@@ -15,4 +15,5 @@
     <string name="send_message">Send Message</string>
     <string name="bluetooth_turned_on_success_message">"Bluetooth successfully turned on."</string>
     <string name="disconnected">Disconnected!</string>
+    <string name="message_label">Message</string>
 </resources>

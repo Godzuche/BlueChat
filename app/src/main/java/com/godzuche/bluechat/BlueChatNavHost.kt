@@ -8,7 +8,6 @@ import androidx.navigation.compose.NavHost
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.chat.presentation.chat.chatRoute
 import com.godzuche.bluechat.chat.presentation.chat.chatScreen
-import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
 import com.godzuche.bluechat.chat.presentation.device_list.devicesScreen
 
 @Composable

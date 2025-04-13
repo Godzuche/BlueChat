@@ -17,9 +17,10 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.example.bluechat.R
-import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
+import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
+import com.godzuche.bluechat.core.presentation.util.debugLog
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -66,7 +67,7 @@ class MainActivity : ComponentActivity() {
             } else true*/
             val grantedAll = perms.values.all { it }
             if (grantedAll) {
-                Log.d("Perm", "Granted All")
+                debugLog { "Perm Granted All" }
                 if (/*canEnableBluetooth &&*/ isBluetoothEnabled.not()) {
                     enableBluetoothLauncher.launch(
                         Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 // Todo: Handle rejection.
-                Log.d("Perm", "Not Granted: ${perms.filter { !it.value }.map { it.key }}")
+                debugLog { "Perm Not Granted: ${perms.filter { !it.value }.map { it.key }}" }
             }
         }
 
