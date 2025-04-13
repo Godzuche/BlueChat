@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -122,9 +122,7 @@ fun ChatScreen(
                 val isLastInARow =
                     nextMessage == null || message.senderName != nextMessage.senderName
 
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     ChatMessage(
                         isFirstInARow = isFirstInARow,
                         isLastInARow = isLastInARow,
@@ -151,7 +149,7 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
 //            TextField(
@@ -171,9 +169,10 @@ fun ChatScreen(
             // Todo: Make Multiline
             MessageField(
                 modifier = Modifier
-                    .height(48.dp)
+                    .heightIn(min = 48.dp)
                     .weight(1f),
                 value = state.messageInput,
+                singleLine = false,
                 shape = RoundedCornerShape(24.dp),
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.None,
@@ -185,7 +184,7 @@ fun ChatScreen(
                     Text(
                         text = "Message",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 },
                 leadingIcon = null,
@@ -248,7 +247,8 @@ private fun MessageField(
                 keyboardOptions = keyboardOptions,
                 textStyle = textStyle,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .clip(shape)
                     .background(containerColor),
                 decorationBox = { innerTextField ->
