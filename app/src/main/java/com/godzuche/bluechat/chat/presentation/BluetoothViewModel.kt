@@ -118,14 +118,14 @@ class BluetoothViewModel @Inject constructor(
     fun onMessageInputChange(input: String) {
         viewModelScope.launch {
             _state.update {
-                it.copy(messageInput = input.trim())
+                it.copy(messageInput = input)
             }
         }
     }
 
     fun sendMessage() {
         viewModelScope.launch(Dispatchers.Default) {
-            val message = state.value.messageInput
+            val message = state.value.messageInput.trim()
             val sentMessage = bluetoothController.trySendMessage(message)
             Log.d("Chat", "bluetoothMessage vm: $sentMessage")
             if (sentMessage != null) {

@@ -11,8 +11,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -32,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -113,6 +117,8 @@ fun BlueChatApp(
         discoverabilityLauncher.launch(discoverableIntent)
     }
 
+    val layoutDirection = LocalConfiguration.current.layoutDirection
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -188,12 +194,12 @@ fun BlueChatApp(
                 }
             }
         }
-    ) {
+    ) { scaffoldPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
-                .consumeWindowInsets(it),
+                .padding(scaffoldPadding)
+//                .consumeWindowInsets(scaffoldPadding)
         ) {
             BlueChatNavHost(
                 bluetoothViewModel = bluetoothViewModel,
