@@ -93,6 +93,14 @@ class BluetoothViewModel @Inject constructor(
             .listen()
     }
 
+    fun stopListeningForIncomingConnections() {
+        if (state.value.isConnecting ) {
+            _state.update { it.copy(isConnecting = false) }
+            deviceConnectionJob?.cancel()
+            bluetoothController.closeConnection()
+        }
+    }
+
     fun connectToDevice(device: BluetoothDevice) {
         stopScan()
 

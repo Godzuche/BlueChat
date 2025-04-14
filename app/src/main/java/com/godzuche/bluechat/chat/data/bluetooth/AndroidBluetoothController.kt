@@ -315,7 +315,7 @@ class AndroidBluetoothController @Inject constructor(
             currentServerSocket?.close()
 //            currentServerSocket = null
         } catch (e: IOException) {
-            Log.e("BTT", "Could not close the connect socket", e)
+            debugLog { "BTT Could not close the connect socket" }
         }
     }
 

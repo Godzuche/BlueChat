@@ -3,10 +3,10 @@ package com.godzuche.bluechat
 import android.app.Activity.RESULT_CANCELED
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
-import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,20 +43,53 @@ import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.chat.presentation.chat.chatRoute
 import com.godzuche.bluechat.chat.presentation.chat.navigateToChat
 import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
-import com.godzuche.bluechat.core.design_system.components.LoadingScreen
+import com.godzuche.bluechat.core.design_system.components.WaveLoadingScreen
+import com.godzuche.bluechat.core.presentation.util.Constants
 import com.godzuche.bluechat.core.presentation.util.debugLog
+import com.godzuche.bluechat.core.presentation.util.startDiscoverabilityCountdown
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlueChatApp(
     bluetoothViewModel: BluetoothViewModel = hiltViewModel(),
 ) {
+    val uiState by bluetoothViewModel.state.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val currentDestination: NavDestination? =
         navController.currentBackStackEntryAsState().value?.destination
     val context = LocalContext.current
 
-    val uiState by bluetoothViewModel.state.collectAsStateWithLifecycle()
+    val discoverabilityLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            when (result.resultCode) {
+                RESULT_CANCELED -> {
+                    debugLog { "Bluetooth Discoverability declined by the user" }
+                    Toast.makeText(context, "Device discovery declined", Toast.LENGTH_SHORT).show()
+                }
+
+                else -> {
+                    debugLog { "Bluetooth Device is discoverable for ${result.resultCode} seconds" }
+                    bluetoothViewModel.listenAndWaitForIncomingConnections()
+                    startDiscoverabilityCountdown(
+                        durationInSeconds = Constants.BLUETOOTH_DISCOVERABILITY_TIMEOUT_SECONDS,
+                        onTick = { secondsLeft ->
+                            debugLog { "Discoverability Discoverable for $secondsLeft seconds" }
+                        },
+                        onFinish = {
+                            debugLog { "TimedOut: Discoverability Device is no longer discoverable." }
+                            bluetoothViewModel.stopListeningForIncomingConnections()
+                        }
+                    )
+                }
+            }
+        }
+
+    fun makeDeviceDiscoverable(durationInSeconds: Int = Constants.BLUETOOTH_DISCOVERABILITY_TIMEOUT_SECONDS) {
+        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, durationInSeconds)
+        }
+        discoverabilityLauncher.launch(discoverableIntent)
+    }
 
     LaunchedEffect(key1 = uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
@@ -92,29 +124,6 @@ fun BlueChatApp(
         }
     }
 
-    val discoverabilityLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            when (result.resultCode) {
-                RESULT_CANCELED -> {
-                    debugLog { "Bluetooth Discoverability declined by the user" }
-                }
-
-                else -> {
-                    debugLog { "Bluetooth Device is discoverable for ${result.resultCode} seconds" }
-                    startDiscoverabilityCountdown(durationInSeconds = 60)
-                }
-            }
-        }
-
-    fun makeDeviceDiscoverable(durationInSeconds: Int = 300) { // 2 minutes
-        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-            putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, durationInSeconds)
-        }
-        discoverabilityLauncher.launch(discoverableIntent)
-    }
-
-    val layoutDirection = LocalConfiguration.current.layoutDirection
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -132,22 +141,24 @@ fun BlueChatApp(
                                 stringResource(id = R.string.stop)
                             } else stringResource(id = R.string.scan)
 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (uiState.isDiscovering) {
-                                    CircularProgressIndicator()
-                                }
+                            AnimatedVisibility(visible = !uiState.isConnecting) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (uiState.isDiscovering) {
+                                        CircularProgressIndicator()
+                                    }
 
-                                debugLog { "BT IsDiscovering" + uiState.isDiscovering.toString() }
-                                debugLog {
-                                    "BT IsDiscoveryFinished" + uiState.isDiscoveringFinished.toString()
-                                }
+                                    debugLog { "BT IsDiscovering " + uiState.isDiscovering.toString() }
+                                    debugLog {
+                                        "BT IsDiscoveryFinished " + uiState.isDiscoveringFinished.toString()
+                                    }
 
-                                TextButton(
-                                    onClick = if (uiState.isDiscovering)
-                                        bluetoothViewModel::stopScan
-                                    else bluetoothViewModel::startScan,
-                                ) {
-                                    Text(text = buttonText)
+                                    TextButton(
+                                        onClick = if (uiState.isDiscovering)
+                                            bluetoothViewModel::stopScan
+                                        else bluetoothViewModel::startScan,
+                                    ) {
+                                        Text(text = buttonText)
+                                    }
                                 }
                             }
                         }
@@ -165,10 +176,12 @@ fun BlueChatApp(
             )
         },
         floatingActionButton = {
-            if (currentDestination?.route == devicesRoute) {
+//            if (currentDestination?.route == devicesRoute && !uiState.isConnecting) {
+            AnimatedVisibility(
+                visible = currentDestination?.route == devicesRoute && !uiState.isConnecting
+            ) {
                 FloatingActionButton(
                     onClick = {
-                        bluetoothViewModel.listenAndWaitForIncomingConnections()
                         makeDeviceDiscoverable()
                     }
                 ) {
@@ -203,23 +216,11 @@ fun BlueChatApp(
         }
 
         if (uiState.isConnecting) {
-            LoadingScreen(modifier = Modifier.fillMaxSize())
+//            LoadingScreen(modifier = Modifier.fillMaxSize())
+//            BtLoadingScreen(modifier = Modifier.fillMaxSize())
+            WaveLoadingScreen(modifier = Modifier.fillMaxSize())
         }
 
     }
 
-}
-
-fun startDiscoverabilityCountdown(durationInSeconds: Int) {
-    val timer = object : CountDownTimer(durationInSeconds * 1000L, 1000L) {
-        override fun onTick(millisUntilFinished: Long) {
-            val secondsLeft = millisUntilFinished / 1000
-            debugLog { "Discoverability Discoverable for $secondsLeft seconds" }
-        }
-
-        override fun onFinish() {
-            debugLog { "Discoverability Device is no longer discoverable." }
-        }
-    }
-    timer.start()
 }
