@@ -232,13 +232,15 @@ class AndroidBluetoothController @Inject constructor(
                 currentClientSocket = try {
                     currentServerSocket?.accept()
                 } catch (e: IOException) {
+                    emit(ConnectionResult.Error(e.localizedMessage ?: "Unknown error"))
                     shouldLoop = false
                     null
                 }
 
-                emit(ConnectionResult.ConnectionEstablished)
+//                emit(ConnectionResult.ConnectionEstablished)
 
                 currentClientSocket?.let {
+                    emit(ConnectionResult.ConnectionEstablished)
                     currentServerSocket?.close()
                     val service = BluetoothDataTransferService(it)
                     dataTransferService = service

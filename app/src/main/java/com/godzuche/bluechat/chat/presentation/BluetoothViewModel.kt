@@ -34,7 +34,7 @@ class BluetoothViewModel @Inject constructor(
         initData()
     }
 
-    fun initData() {
+    private fun initData() {
 //        viewModelScope.launch(Dispatchers.Default) {
         bluetoothController.pairedDevices.onEach { pairedDevices ->
             _state.update {
@@ -87,15 +87,27 @@ class BluetoothViewModel @Inject constructor(
     }
 
     fun listenAndWaitForIncomingConnections() {
-        _state.update { it.copy(isConnecting = true) }
+        _state.update {
+            it.copy(
+                isConnecting = false,
+                isWaiting = true,
+            )
+        }
         deviceConnectionJob = bluetoothController
             .startBluetoothServer()
             .listen()
     }
 
     fun stopListeningForIncomingConnections() {
-        if (state.value.isConnecting ) {
-            _state.update { it.copy(isConnecting = false) }
+        debugLog { "Stop listening for incoming connections" }
+//        if (state.value.isConnecting) {
+        if (state.value.isWaiting) {
+            _state.update {
+                it.copy(
+//                    isConnecting = false,
+                    isWaiting = false,
+                )
+            }
             deviceConnectionJob?.cancel()
             bluetoothController.closeConnection()
         }
@@ -105,7 +117,12 @@ class BluetoothViewModel @Inject constructor(
         stopScan()
 
         debugLog { "Connect vm" }
-        _state.update { it.copy(isConnecting = true) }
+        _state.update {
+            it.copy(
+                isConnecting = true,
+                isWaiting = false,
+            )
+        }
         deviceConnectionJob = bluetoothController
             .connectToDevice(device)
             .listen()
@@ -115,7 +132,11 @@ class BluetoothViewModel @Inject constructor(
         deviceConnectionJob?.cancel()
         bluetoothController.closeConnection()
         _state.update {
-            it.copy(isConnecting = false, isConnected = false)
+            it.copy(
+                isConnecting = false,
+                isConnected = false,
+                isWaiting = false,
+            )
         }
     }
 
@@ -156,7 +177,8 @@ class BluetoothViewModel @Inject constructor(
                         it.copy(
                             isConnected = true,
                             isConnecting = false,
-                            errorMessage = null
+                            isWaiting = false,
+                            errorMessage = null,
                         )
                     }
                 }
@@ -166,7 +188,8 @@ class BluetoothViewModel @Inject constructor(
                         it.copy(
                             isConnected = false,
                             isConnecting = false,
-                            errorMessage = result.errorMessage
+                            isWaiting = false,
+                            errorMessage = result.errorMessage,
                         )
                     }
                 }
@@ -175,9 +198,7 @@ class BluetoothViewModel @Inject constructor(
                     debugLog { "Chat Received: ${result.message}" }
                     _state.update {
                         val messages = it.messages + result.message
-                        it.copy(
-                            messages = messages
-                        )
+                        it.copy(messages = messages)
                     }
                     debugLog { "Chat messages: ${state.value.messages}" }
                 }
@@ -190,6 +211,8 @@ class BluetoothViewModel @Inject constructor(
                     it.copy(
                         isConnected = false,
                         isConnecting = false,
+                        isWaiting = false,
+                        errorMessage = throwable.localizedMessage ?: "Unknown error",
                     )
                 }
             }

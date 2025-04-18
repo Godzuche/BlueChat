@@ -7,11 +7,19 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.rounded.Add
@@ -30,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,10 +52,10 @@ import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.chat.presentation.chat.chatRoute
 import com.godzuche.bluechat.chat.presentation.chat.navigateToChat
 import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
-import com.godzuche.bluechat.core.design_system.components.WaveLoadingScreen
+import com.godzuche.bluechat.core.design_system.components.PhysicsRippleScanner3
 import com.godzuche.bluechat.core.presentation.util.Constants
+import com.godzuche.bluechat.core.presentation.util.DiscoverabilityTimer
 import com.godzuche.bluechat.core.presentation.util.debugLog
-import com.godzuche.bluechat.core.presentation.util.startDiscoverabilityCountdown
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +79,7 @@ fun BlueChatApp(
                 else -> {
                     debugLog { "Bluetooth Device is discoverable for ${result.resultCode} seconds" }
                     bluetoothViewModel.listenAndWaitForIncomingConnections()
-                    startDiscoverabilityCountdown(
+                    DiscoverabilityTimer.startDiscoverabilityCountdown(
                         durationInSeconds = Constants.BLUETOOTH_DISCOVERABILITY_TIMEOUT_SECONDS,
                         onTick = { secondsLeft ->
                             debugLog { "Discoverability Discoverable for $secondsLeft seconds" }
@@ -141,7 +150,15 @@ fun BlueChatApp(
                                 stringResource(id = R.string.stop)
                             } else stringResource(id = R.string.scan)
 
-                            AnimatedVisibility(visible = !uiState.isConnecting) {
+                            AnimatedVisibility(
+                                visible = !uiState.isConnecting && !uiState.isWaiting,
+                                enter = fadeIn() + slideInHorizontally(
+                                    initialOffsetX = { it * 2 }
+                                ),
+                                exit = slideOutHorizontally(
+                                    targetOffsetX = { it * 2 }
+                                ) + fadeOut(),
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (uiState.isDiscovering) {
                                         CircularProgressIndicator()
@@ -176,14 +193,17 @@ fun BlueChatApp(
             )
         },
         floatingActionButton = {
-//            if (currentDestination?.route == devicesRoute && !uiState.isConnecting) {
             AnimatedVisibility(
-                visible = currentDestination?.route == devicesRoute && !uiState.isConnecting
+                visible = currentDestination?.route == devicesRoute && !uiState.isConnecting && !uiState.isWaiting,
+                enter = fadeIn() + slideInHorizontally(
+                    initialOffsetX = { it * 2 }
+                ),
+                exit = slideOutHorizontally(
+                    targetOffsetX = { it * 2 }
+                ) + fadeOut(),
             ) {
                 FloatingActionButton(
-                    onClick = {
-                        makeDeviceDiscoverable()
-                    }
+                    onClick = { makeDeviceDiscoverable() },
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -215,12 +235,39 @@ fun BlueChatApp(
             )
         }
 
-        if (uiState.isConnecting) {
-//            LoadingScreen(modifier = Modifier.fillMaxSize())
-//            BtLoadingScreen(modifier = Modifier.fillMaxSize())
-            WaveLoadingScreen(modifier = Modifier.fillMaxSize())
-        }
+        when {
+            uiState.isConnecting -> {
+                PhysicsRippleScanner3()
+            }
 
+            uiState.isWaiting -> {
+                Box {
+                    PhysicsRippleScanner3()
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .offset(y = (-120).dp)
+                            .clip(CircleShape)
+                            .clickable {
+                                DiscoverabilityTimer.stopDiscoverabilityCountdown(
+                                    onStop = {
+                                        bluetoothViewModel.stopListeningForIncomingConnections()
+                                    }
+                                )
+                            }
+                            .padding(12.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Stop waiting for incoming connections",
+                            modifier = Modifier
+                                .size(40.dp),
+                            tint = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
+                }
+            }
+        }
     }
 
 }
