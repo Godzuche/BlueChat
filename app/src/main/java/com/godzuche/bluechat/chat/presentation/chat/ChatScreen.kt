@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -30,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -45,6 +45,7 @@ import com.godzuche.bluechat.core.design_system.components.MessageField
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 import com.godzuche.bluechat.core.presentation.util.animateScrollToItem
 import com.godzuche.bluechat.core.presentation.util.isKeyboardVisible
+import com.godzuche.bluechat.core.presentation.util.lastVisibleItemIndex
 
 @Composable
 fun ChatRoute(
@@ -65,7 +66,6 @@ fun ChatScreen(
     onMessageInputChange: (String) -> Unit,
     onSendMessage: () -> Unit,
 ) {
-    val keyboardController = LocalSoftwareKeyboardController.current
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val listState = rememberLazyListState()
     val keyboardVisible by isKeyboardVisible()
@@ -79,14 +79,18 @@ fun ChatScreen(
         }
     }
 
-    LaunchedEffect(keyboardVisible) {
-        if (keyboardVisible) {
+    LaunchedEffect(keyboardVisible, state.messages) {
+//        if (keyboardVisible) {
+//            scrollToBottom()
+//        }
+        if (!listState.isScrollInProgress && listState.lastVisibleItemIndex < state.messages.lastIndex) {
             scrollToBottom()
         }
     }
 
     Column(
         modifier = Modifier
+            .navigationBarsPadding()
             .imePadding()
             .fillMaxSize()
     ) {
@@ -94,13 +98,13 @@ fun ChatScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxWidth()
-//                .imeNestedScroll()
                 .weight(1f)
         ) {
             itemsIndexed(items = state.messages) { index, message ->
                 val alignment = if (message.isFromLocalUser) {
                     Alignment.End
                 } else Alignment.Start
+
                 val previousMessage = state.messages.getOrNull(index - 1)
                 val nextMessage = state.messages.getOrNull(index + 1)
                 val isFirstInARow =

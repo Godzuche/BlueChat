@@ -12,9 +12,9 @@ import com.godzuche.bluechat.chat.presentation.device_list.devicesScreen
 
 @Composable
 fun BlueChatNavHost(
-    bluetoothViewModel: BluetoothViewModel = hiltViewModel(),
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    bluetoothViewModel: BluetoothViewModel = hiltViewModel(),
     startDestination: String = devicesRoute,
 ) {
     NavHost(

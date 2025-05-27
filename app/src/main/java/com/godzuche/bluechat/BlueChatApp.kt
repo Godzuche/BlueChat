@@ -15,10 +15,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -52,7 +58,7 @@ import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.chat.presentation.chat.chatRoute
 import com.godzuche.bluechat.chat.presentation.chat.navigateToChat
 import com.godzuche.bluechat.chat.presentation.device_list.devicesRoute
-import com.godzuche.bluechat.core.design_system.components.PhysicsRippleScanner3
+import com.godzuche.bluechat.core.design_system.components.PhysicsRippleScanner
 import com.godzuche.bluechat.core.presentation.util.Constants
 import com.godzuche.bluechat.core.presentation.util.DiscoverabilityTimer
 import com.godzuche.bluechat.core.presentation.util.debugLog
@@ -195,6 +201,7 @@ fun BlueChatApp(
         floatingActionButton = {
             AnimatedVisibility(
                 visible = currentDestination?.route == devicesRoute && !uiState.isConnecting && !uiState.isWaiting,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
                 enter = fadeIn() + slideInHorizontally(
                     initialOffsetX = { it * 2 }
                 ),
@@ -221,13 +228,20 @@ fun BlueChatApp(
                     }
                 }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { scaffoldPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(scaffoldPadding)
-//                .consumeWindowInsets(scaffoldPadding)
+                .consumeWindowInsets(scaffoldPadding)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Horizontal
+                    )
+                )
         ) {
             BlueChatNavHost(
                 bluetoothViewModel = bluetoothViewModel,
@@ -237,12 +251,12 @@ fun BlueChatApp(
 
         when {
             uiState.isConnecting -> {
-                PhysicsRippleScanner3()
+                PhysicsRippleScanner(modifier = Modifier.fillMaxSize())
             }
 
             uiState.isWaiting -> {
                 Box {
-                    PhysicsRippleScanner3()
+                    PhysicsRippleScanner()
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
