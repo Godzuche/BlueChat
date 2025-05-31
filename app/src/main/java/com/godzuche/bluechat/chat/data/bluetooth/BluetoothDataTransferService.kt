@@ -1,7 +1,6 @@
 package com.godzuche.bluechat.chat.data.bluetooth
 
 import android.bluetooth.BluetoothSocket
-import android.util.Log
 import com.godzuche.bluechat.chat.domain.TransferFailedException
 import com.godzuche.bluechat.core.presentation.util.debugLog
 import kotlinx.coroutines.Dispatchers
@@ -14,13 +13,13 @@ import java.io.IOException
 class BluetoothDataTransferService(
     private val socket: BluetoothSocket,
 ) {
-    fun listenForIncomingData(): Flow<String> {
+    fun listenForIncomingData(): Flow</*String*/ Pair<ByteArray, Int>> {
         return flow {
             if (socket.isConnected.not()) {
                 debugLog { "Chat socket not connected" }
                 return@flow
             }
-            val buffer = ByteArray(1024)
+            val buffer = ByteArray(2048)
             while (true) {
                 val numBytes = try {
                     socket.inputStream.read(buffer)
@@ -30,7 +29,8 @@ class BluetoothDataTransferService(
                 }
 
                 emit(
-                    buffer.decodeToString(endIndex = numBytes)
+//                    buffer.decodeToString(endIndex = numBytes)
+                    buffer to numBytes
                 )
             }
         }.flowOn(Dispatchers.IO)

@@ -20,8 +20,13 @@ enum class MBuildType(val type: String) {
     STAGING("staging");
 }
 
+val red = "\u001B[31m"
+val green = "\u001B[32m"
+val yellow = "\u001B[33m"
+val reset = "\u001B[0m"
+
 inline fun debugLog(generateMsg: () -> String) {
     if (isDebugBuild()) {
-        println("\uD83D\uDEE0\uFE0F DEBUG: ${generateMsg()}")
+        println("\uD83D\uDEE0\uFE0F $red DEBUG: ${generateMsg()} $reset")
     }
 }

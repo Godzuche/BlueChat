@@ -16,9 +16,8 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import com.godzuche.bluechat.ALL_BT_PERMISSIONS
+import com.godzuche.bluechat.chat.data.BluetoothMessageSerializer
 import com.godzuche.bluechat.chat.data.mappers.toBluetoothDeviceDomain
-import com.godzuche.bluechat.chat.data.mappers.toBluetoothMessage
-import com.godzuche.bluechat.chat.data.mappers.toByteArray
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDeviceDomain
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
@@ -248,9 +247,12 @@ class AndroidBluetoothController @Inject constructor(
                     emitAll(
                         service
                             .listenForIncomingData()
-                            .map { data ->
+                            .map { (data, numBytes) ->
                                 ConnectionResult.TransferSucceeded(
-                                    data.toBluetoothMessage(isFromLocalUser = false)
+//                                    data.toBluetoothMessage(isFromLocalUser = false)
+                                    BluetoothMessageSerializer
+                                        .decode(data, numBytes)
+                                        .copy(isFromLocalUser = false)
                                 )
                             }
                     )
@@ -292,9 +294,12 @@ class AndroidBluetoothController @Inject constructor(
                     BluetoothDataTransferService(socket).also {
                         dataTransferService = it
                         emitAll(
-                            it.listenForIncomingData().map { data ->
+                            it.listenForIncomingData().map { (data, numBytes) ->
                                 ConnectionResult.TransferSucceeded(
-                                    data.toBluetoothMessage(isFromLocalUser = false)
+//                                    data.toBluetoothMessage(isFromLocalUser = false)
+                                    BluetoothMessageSerializer
+                                        .decode(data, numBytes)
+                                        .copy(isFromLocalUser = false)
                                 )
                             })
                     }
@@ -345,7 +350,8 @@ class AndroidBluetoothController @Inject constructor(
             isFromLocalUser = true,
         )
 
-        val result = dataTransferService?.sendMessage(bluetoothMessage.toByteArray())
+        val result = dataTransferService
+            ?.sendMessage(BluetoothMessageSerializer.encode(bluetoothMessage))
         debugLog { "Chat trySendMessage result: $result" }
 
         return bluetoothMessage

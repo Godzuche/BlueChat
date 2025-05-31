@@ -154,14 +154,23 @@ class BluetoothViewModel @Inject constructor(
 
     fun sendMessage() {
         viewModelScope.launch(Dispatchers.Default) {
-            val message = state.value.messageInput.trim()
-            val sentMessage = bluetoothController.trySendMessage(message)
-            debugLog { "Chat bluetoothMessage vm: $sentMessage" }
-            if (sentMessage != null) {
+            try {
+                val message = state.value.messageInput.trim()
+                val sentMessage = bluetoothController.trySendMessage(message)
+                debugLog { "Chat bluetoothMessage vm: $sentMessage" }
+                if (sentMessage != null) {
+                    _state.update {
+                        it.copy(
+                            messages = it.messages + sentMessage,
+                            messageInput = "",
+                        )
+                    }
+                }
+            } catch (t: Throwable) {
+                t.printStackTrace()
                 _state.update {
                     it.copy(
-                        messages = it.messages + sentMessage,
-                        messageInput = "",
+                        errorMessage = t.localizedMessage,
                     )
                 }
             }
@@ -206,6 +215,8 @@ class BluetoothViewModel @Inject constructor(
             }
         }
             .catch { throwable ->
+                throwable.printStackTrace()
+                debugLog { "Error VM: ${throwable.localizedMessage}" }
                 bluetoothController.closeConnection()
                 _state.update {
                     it.copy(
