@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -16,8 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.bluechat.R
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.core.data.util.haveAllPermissions
@@ -55,9 +53,10 @@ class MainActivity : ComponentActivity() {
                     R.string.bluetooth_turned_on_success_message,
                     Toast.LENGTH_LONG,
                 ).show()
+
                 viewModel.updatePairedDevices()
             } else {
-                // Show a dialog explaining why the user has to turn on bluetooth.
+                // Todo: Show a dialog explaining why the user has to turn on bluetooth.
             }
         }
 
@@ -81,29 +80,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-
-        permissionLauncher.launch(
-            /*arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT,
-//                    Manifest.permission.BLUETOOTH,
-            )*/
-            ALL_BT_PERMISSIONS
-        )
-//        } else {
-        /*enableBluetoothLauncher.launch(
-            Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-        )*/
-
-        /*permissionLauncher.launch(
-            arrayOf(
-                *//*Manifest.permission.BLUETOOTH,
-                    Manifest.permission.BLUETOOTH_ADMIN,*//*
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                )
-            )*/
-//        }
+        permissionLauncher.launch(ALL_BT_PERMISSIONS)
 
         setContent {
             val isDark = isSystemInDarkTheme()
@@ -118,15 +95,32 @@ class MainActivity : ComponentActivity() {
                 ) { isDark },
             )
 
-            val isBluetoothEnabledAndPermissionGranted =
-                isBluetoothEnabled && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    LocalContext.current.haveAllPermissions(ALL_BT_PERMISSIONS)
-                } else true
+//            val isBluetoothEnabledAndPermissionGranted =
+//                isBluetoothEnabled && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                    LocalContext.current.haveAllPermissions(ALL_BT_PERMISSIONS)
+//                } else true
 
-            Log.e("BTT", "IsBTEnabled: $isBluetoothEnabledAndPermissionGranted")
+//            Log.e("BTT", "IsBTEnabled: $isBluetoothEnabledAndPermissionGranted")
 
-            LaunchedEffect(key1 = isBluetoothEnabledAndPermissionGranted) {
+//            LaunchedEffect(key1 = isBluetoothEnabledAndPermissionGranted) {
+//                debugLog {
+//                    "isBluetoothEnabledAndPermissionGranted: $isBluetoothEnabledAndPermissionGranted"
+//                }
+//                viewModel.updatePairedDevices()
+//            }
+
+            LifecycleResumeEffect(Unit) {
+                val isBluetoothEnabledAndPermissionGranted =
+                    isBluetoothEnabled && if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        this@MainActivity.haveAllPermissions(ALL_BT_PERMISSIONS)
+                    } else true
+
+                debugLog {
+                    "Resume isBluetoothEnabledAndPermissionGranted: $isBluetoothEnabledAndPermissionGranted"
+                }
                 viewModel.updatePairedDevices()
+
+                onPauseOrDispose {  }
             }
 
             BlueChatTheme {
@@ -160,21 +154,21 @@ val ALL_BT_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
     )
 }
 
-val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-    arrayOf(
-        Manifest.permission.BLUETOOTH_SCAN,
-        Manifest.permission.BLUETOOTH_CONNECT,
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    )
-} else {
-    arrayOf(
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    )
-}
+//val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//    arrayOf(
+//        Manifest.permission.BLUETOOTH_SCAN,
+//        Manifest.permission.BLUETOOTH_CONNECT,
+//        Manifest.permission.BLUETOOTH,
+//        Manifest.permission.BLUETOOTH_ADMIN,
+//        Manifest.permission.ACCESS_FINE_LOCATION
+//    )
+//} else {
+//    arrayOf(
+//        Manifest.permission.BLUETOOTH,
+//        Manifest.permission.BLUETOOTH_ADMIN,
+//        Manifest.permission.ACCESS_FINE_LOCATION
+//    )
+//}
 
 /**
  * The default light scrim, as defined by androidx and the platform:
