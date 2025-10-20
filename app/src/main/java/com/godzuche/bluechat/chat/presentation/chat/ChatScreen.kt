@@ -18,8 +18,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -66,7 +67,8 @@ fun ChatScreen(
     onMessageInputChange: (String) -> Unit,
     onSendMessage: () -> Unit,
 ) {
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+//    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val screenWidth = LocalWindowInfo.current.containerSize.width.dp
     val listState = rememberLazyListState()
     val keyboardVisible by isKeyboardVisible()
 
@@ -168,7 +170,7 @@ fun ChatScreen(
                 modifier = Modifier.size(48.dp),
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_send),
                     contentDescription = stringResource(id = R.string.send_message),
                 )
             }

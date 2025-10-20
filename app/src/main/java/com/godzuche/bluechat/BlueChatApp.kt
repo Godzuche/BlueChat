@@ -26,9 +26,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -45,8 +42,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -189,7 +188,7 @@ fun BlueChatApp(
                         chatRoute -> {
                             IconButton(onClick = bluetoothViewModel::disconnectFromDevice) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = ImageVector.vectorResource(R.drawable.ic_close),
                                     contentDescription = stringResource(id = R.string.disconnect),
                                 )
                             }
@@ -222,7 +221,7 @@ fun BlueChatApp(
                             style = MaterialTheme.typography.labelLarge,
                         )
                         Icon(
-                            imageVector = Icons.Rounded.Add,
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_add_2),
                             contentDescription = stringResource(id = R.string.host_chat)
                         )
                     }
@@ -272,7 +271,7 @@ fun BlueChatApp(
                             .padding(12.dp),
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_close),
                             contentDescription = "Stop waiting for incoming connections",
                             modifier = Modifier
                                 .size(40.dp),
