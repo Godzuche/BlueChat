@@ -1,5 +1,6 @@
 package com.godzuche.bluechat.chat.data
 
+import com.godzuche.bluechat.chat.domain.BluetoothEvent
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.domain.BluetoothSerializer
 import com.godzuche.bluechat.core.presentation.util.debugLog
@@ -20,5 +21,23 @@ object BluetoothMessageSerializer : BluetoothSerializer<BluetoothMessage> {
         val message = Json.decodeFromString<BluetoothMessage>(decodedJsonString)
         debugLog { "Decoded message object: $message" }
         return message
+    }
+}
+
+object BluetoothEventSerializer : BluetoothSerializer<BluetoothEvent> {
+    override fun encode(value: BluetoothEvent): ByteArray {
+        val jsonString = Json.encodeToString(value)
+        debugLog { "Encoded json: $jsonString" }
+        val encodedBytes = jsonString.encodeToByteArray()
+        debugLog { "Encoded bytes: $encodedBytes" }
+        return encodedBytes
+    }
+
+    override fun decode(value: ByteArray, numBytes: Int): BluetoothEvent {
+        val decodedJsonString = value.decodeToString(endIndex = numBytes)
+        debugLog { "Decoded json: $decodedJsonString" }
+        val event = Json.decodeFromString<BluetoothEvent>(decodedJsonString)
+        debugLog { "Decoded event object: $event" }
+        return event
     }
 }

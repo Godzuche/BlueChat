@@ -20,4 +20,5 @@ interface BluetoothController {
     fun closeConnection()
     fun release()
     suspend fun trySendMessage(message: String): BluetoothMessage?
+    suspend fun trySendEvent(event: BluetoothEvent): BluetoothEvent?
 }

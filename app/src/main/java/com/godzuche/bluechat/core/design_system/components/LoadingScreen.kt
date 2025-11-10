@@ -11,12 +11,20 @@ import androidx.compose.animation.core.withInfiniteAnimationFrameNanos
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,12 +39,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.example.bluechat.R
+import com.godzuche.bluechat.LocalHazeState
+import dev.chrisbanes.haze.LocalHazeStyle
+import dev.chrisbanes.haze.hazeEffect
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 @Composable
@@ -52,6 +66,73 @@ fun LoadingScreen(
             contentAlignment = Alignment.Center,
         ) {
             CircularProgressIndicator()
+        }
+    }
+}
+
+@Composable
+fun ConnectingScreen(
+    loadingStatusMessage: String?,
+    canCancel: Boolean,
+    onCancelClick: () -> Unit,
+    animation: @Composable () -> Unit = {
+        PhysicsRippleScanner(modifier = Modifier.fillMaxSize())
+    },
+) {
+    val infiniteTransition = rememberInfiniteTransition("connection-state-transition")
+    val animatedEllipsisCount by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, delayMillis = 500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "ellipsis",
+    )
+
+    Box {
+//        PhysicsRippleScanner(modifier = Modifier.fillMaxSize())
+        animation()
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = (-120).dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Connection status message
+            loadingStatusMessage?.let { message ->
+                Text(
+                    text = message + ".".repeat(animatedEllipsisCount.roundToInt()),
+                )
+            }
+
+            if (canCancel) {
+                Button(
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                    onClick = onCancelClick,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_close),
+                            contentDescription = "Cancel connection initiation",
+                            modifier = Modifier
+                                .size(24.dp),
+                        )
+
+                        Text(
+                            text = "Cancel",
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -80,7 +161,7 @@ fun PhysicsRippleScanner(
                 animation = tween(durationMillis * 2, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
             ),
-            label = "freq-$it"
+            label = "freq-$it",
         )
     }
 
@@ -119,13 +200,20 @@ fun PhysicsRippleScanner(
 
     Surface(
         color = Color.Transparent,
+        modifier = Modifier
+            .hazeEffect(
+                state = LocalHazeState.current,
+                style = LocalHazeStyle.current,
+            )
     ) {
         Box(
             modifier = modifier
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.6f)),
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
                 val center = Offset(size.width / 2f, size.height / 2f)
                 val seconds = time / 1_000_000_000f
 

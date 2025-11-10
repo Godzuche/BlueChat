@@ -31,10 +31,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.bluechat.R
+import com.godzuche.bluechat.LocalAppScaffoldPadding
+import com.godzuche.bluechat.LocalHazeState
 import com.godzuche.bluechat.chat.domain.BluetoothDevice
 import com.godzuche.bluechat.chat.presentation.BluetoothUiState
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
+import dev.chrisbanes.haze.hazeSource
+import java.util.UUID
 
 @Composable
 fun DevicesRoute(
@@ -69,7 +73,12 @@ fun DevicesScreen(
         state = listState,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .hazeSource(
+                state = LocalHazeState.current,
+            ),
+        contentPadding = LocalAppScaffoldPadding.current,
     ) {
         item {
             Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.systemBars))
@@ -95,7 +104,7 @@ fun DevicesScreen(
             items(
                 items = uiState.scannedDevices,
                 span = { GridItemSpan(maxLineSpan) },
-                key = { it.hardwareAddress + it.name },
+                key = { it.hardwareAddress + it.name + UUID.randomUUID().toString() },
             ) { device ->
                 val deviceIndex = uiState.scannedDevices.indexOf(device)
                 val shape = RoundedCornerShape(

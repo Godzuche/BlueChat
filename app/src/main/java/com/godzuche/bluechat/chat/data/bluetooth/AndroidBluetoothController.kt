@@ -16,10 +16,12 @@ import android.os.Build
 import android.os.ParcelUuid
 import android.util.Log
 import com.godzuche.bluechat.ALL_BT_PERMISSIONS
+import com.godzuche.bluechat.chat.data.BluetoothEventSerializer
 import com.godzuche.bluechat.chat.data.BluetoothMessageSerializer
 import com.godzuche.bluechat.chat.data.mappers.toBluetoothDeviceDomain
 import com.godzuche.bluechat.chat.domain.BluetoothController
 import com.godzuche.bluechat.chat.domain.BluetoothDeviceDomain
+import com.godzuche.bluechat.chat.domain.BluetoothEvent
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.domain.ConnectionResult
 import com.godzuche.bluechat.core.data.util.hasPermission
@@ -91,6 +93,7 @@ class AndroidBluetoothController @Inject constructor(
                 debugLog { "BTT Scanned Devices Domain: $scannedDevices" }
                 scannedDevices + newFoundDevice
             }
+            debugLog { "BBBB Scanned Devices: ${scannedDevices.value.toSet()}" }
         },
         onDiscoveryFinished = { isFinished ->
             _isDiscoveringFinished.update { isFinished }
@@ -101,19 +104,24 @@ class AndroidBluetoothController @Inject constructor(
     @SuppressLint("MissingPermission")
     private val bluetoothStateReceiver = BluetoothStateReceiver(
         onStateChange = { isConnected, bluetoothDevice ->
+            debugLog { "BBBB isConnected: $isConnected device: ${bluetoothDevice.toBluetoothDeviceDomain()}" }
+
             when (isConnected) {
                 true -> {
-                    if (bluetoothAdapter?.bondedDevices?.contains(bluetoothDevice) == true) {
-                        _isConnected.update { true }
-                    } else {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            _error.tryEmit("Can't connect to non-paired device")
-                        }
-                    }
+//                    if (bluetoothAdapter?.bondedDevices?.contains(bluetoothDevice) == true) {
+//                        _isConnected.update { true }
+//                    } else {
+//                        CoroutineScope(Dispatchers.Default).launch {
+//                            _error.tryEmit("Can't connect to non-paired device")
+//                        }
+//                    }
+
+                    // Todo
                 }
 
                 false -> {
-                    _isConnected.update { false }
+//                    _isConnected.update { false }
+                    // Todo
                 }
             }
         }
@@ -155,20 +163,9 @@ class AndroidBluetoothController @Inject constructor(
             emptySet()
         }
 
-//        context.registerReceiver(
-//            foundDeviceReceiver,
-//            IntentFilter().apply {
-//                addAction(BluetoothDevice.ACTION_FOUND)
-//                addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-//                addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-//            },
-//        )
-
         updatePairedDevices()
 
-//        if (bluetoothAdapter?.isDiscovering == true) {
         stopDiscovery()
-//        }
 
         bluetoothAdapter?.startDiscovery()
     }
@@ -185,6 +182,7 @@ class AndroidBluetoothController @Inject constructor(
             ?.bondedDevices
             ?.map { it.toBluetoothDeviceDomain() }
             ?.also { devices ->
+                debugLog { "BBBB Paired Devices: ${devices.toSet()}" }
                 _pairedDevices.update { devices.toSet() }
             }
     }
@@ -236,8 +234,6 @@ class AndroidBluetoothController @Inject constructor(
                     null
                 }
 
-//                emit(ConnectionResult.ConnectionEstablished)
-
                 currentClientSocket?.let {
                     emit(ConnectionResult.ConnectionEstablished)
                     currentServerSocket?.close()
@@ -250,9 +246,16 @@ class AndroidBluetoothController @Inject constructor(
                             .map { (data, numBytes) ->
                                 ConnectionResult.TransferSucceeded(
 //                                    data.toBluetoothMessage(isFromLocalUser = false)
-                                    BluetoothMessageSerializer
+//                                    BluetoothMessageSerializer
+//                                        .decode(data, numBytes)
+//                                        .copy(isFromLocalUser = false)
+                                    BluetoothEventSerializer
                                         .decode(data, numBytes)
-                                        .copy(isFromLocalUser = false)
+                                        .run {
+                                            if (this is  BluetoothEvent.Message){
+                                                this.copy(isFromLocalUser = false)
+                                            } else this
+                                        }
                                 )
                             }
                     )
@@ -297,9 +300,16 @@ class AndroidBluetoothController @Inject constructor(
                             it.listenForIncomingData().map { (data, numBytes) ->
                                 ConnectionResult.TransferSucceeded(
 //                                    data.toBluetoothMessage(isFromLocalUser = false)
-                                    BluetoothMessageSerializer
+//                                    BluetoothMessageSerializer
+//                                        .decode(data, numBytes)
+//                                        .copy(isFromLocalUser = false)
+                                    BluetoothEventSerializer
                                         .decode(data, numBytes)
-                                        .copy(isFromLocalUser = false)
+                                        .run {
+                                            if (this is  BluetoothEvent.Message){
+                                                this.copy(isFromLocalUser = false)
+                                            } else this
+                                        }
                                 )
                             })
                     }
@@ -355,6 +365,37 @@ class AndroidBluetoothController @Inject constructor(
         debugLog { "Chat trySendMessage result: $result" }
 
         return bluetoothMessage
+    }
+
+    @SuppressLint("MissingPermission")
+    override suspend fun trySendEvent(event: BluetoothEvent): BluetoothEvent? {
+        if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) && context.hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+                .not()
+        ) {
+            return null
+        }
+
+        if (dataTransferService == null) {
+            return null
+        }
+
+//        val bluetoothMessage = BluetoothMessage(
+//            message = message,
+//            senderName = bluetoothAdapter?.name ?: "Unknown Name",
+//            isFromLocalUser = true,
+//        )
+
+        val bluetoothEvent = if (event is BluetoothEvent.Message){
+            event.copy(senderName = bluetoothAdapter?.name ?: "Unknown Name")
+        } else event
+
+        val result = dataTransferService
+//            ?.sendMessage(BluetoothMessageSerializer.encode(bluetoothMessage))
+            ?.sendMessage(BluetoothEventSerializer.encode(bluetoothEvent))
+        debugLog { "Chat trySendMessage result: $result" }
+
+//        return bluetoothMessage
+        return bluetoothEvent
     }
 
     companion object {

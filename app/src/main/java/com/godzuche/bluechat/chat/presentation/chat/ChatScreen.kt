@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.bluechat.R
+import com.godzuche.bluechat.LocalAppScaffoldPadding
+import com.godzuche.bluechat.chat.domain.BluetoothEvent
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.chat.presentation.BluetoothUiState
 import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
@@ -57,7 +59,8 @@ fun ChatRoute(
     ChatScreen(
         state = uiState,
         onMessageInputChange = bluetoothViewModel::onMessageInputChange,
-        onSendMessage = bluetoothViewModel::sendMessage,
+//        onSendMessage = bluetoothViewModel::sendMessage,
+        onSendMessage = bluetoothViewModel::sendMessage2,
     )
 }
 
@@ -92,6 +95,7 @@ fun ChatScreen(
 
     Column(
         modifier = Modifier
+            .padding(LocalAppScaffoldPadding.current)
             .navigationBarsPadding()
             .imePadding()
             .fillMaxSize()
@@ -192,77 +196,77 @@ private fun ChatScreenPreview() {
 }
 
 private val previewMessages = listOf(
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hi",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Good morning. How are you doing?",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Good morning. How are you doing?",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! I'm doing great, thanks for asking! What about you?",
         senderName = "Doe",
         isFromLocalUser = true,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! I'm doing great. :)",
         senderName = "Doe",
         isFromLocalUser = true,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! :)",
         senderName = "Doe",
         isFromLocalUser = true,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hi",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Good morning. How are you doing?",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! I'm doing great, thanks for asking! What about you?",
         senderName = "Doe",
         isFromLocalUser = true,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hi",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Good morning. How are you doing?",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! I'm doing great, thanks for asking! What about you?",
         senderName = "Doe",
         isFromLocalUser = true,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hi",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Good morning. How are you doing?",
         senderName = "John",
         isFromLocalUser = false,
     ),
-    BluetoothMessage(
+    /*BluetoothMessage*/ BluetoothEvent.Message(
         message = "Hey! I'm doing great, thanks for asking! What about you?",
         senderName = "Doe",
         isFromLocalUser = true,

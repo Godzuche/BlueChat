@@ -7,7 +7,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -21,6 +20,7 @@ import com.godzuche.bluechat.chat.presentation.BluetoothViewModel
 import com.godzuche.bluechat.core.data.util.haveAllPermissions
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 import com.godzuche.bluechat.core.presentation.util.debugLog
+import com.godzuche.bluechat.core.presentation.util.showToast
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,11 +48,12 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) {
             if (it.resultCode == RESULT_OK) {
-                Toast.makeText(
-                    this,
-                    R.string.bluetooth_turned_on_success_message,
-                    Toast.LENGTH_LONG,
-                ).show()
+//                Toast.makeText(
+//                    this,
+//                    R.string.bluetooth_turned_on_success_message,
+//                    Toast.LENGTH_LONG,
+//                ).show()
+                this.showToast(R.string.bluetooth_turned_on_success_message)
 
                 viewModel.updatePairedDevices()
             } else {
@@ -120,7 +121,7 @@ class MainActivity : ComponentActivity() {
                 }
                 viewModel.updatePairedDevices()
 
-                onPauseOrDispose {  }
+                onPauseOrDispose { }
             }
 
             BlueChatTheme {

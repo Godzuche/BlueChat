@@ -17,12 +17,14 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bluechat.R
+import com.godzuche.bluechat.chat.domain.BluetoothEvent
 import com.godzuche.bluechat.chat.domain.BluetoothMessage
 import com.godzuche.bluechat.core.design_system.theme.BlueChatTheme
 
 @Composable
 fun ChatMessage(
-    message: BluetoothMessage,
+//    message: BluetoothMessage,
+    message: BluetoothEvent.Message,
     modifier: Modifier = Modifier,
     isFirstInARow: Boolean = true,
     isLastInARow: Boolean = true,
@@ -99,14 +101,14 @@ fun MessagePreview() {
     BlueChatTheme {
         Row {
             ChatMessage(
-                message = BluetoothMessage(
+                message = /*BluetoothMessage*/ BluetoothEvent.Message(
                     message = stringResource(id = R.string.hello_world),
                     senderName = stringResource(id = R.string.samsung),
                     isFromLocalUser = false,
                 )
             )
             ChatMessage(
-                message = BluetoothMessage(
+                message = /*BluetoothMessage*/BluetoothEvent.Message(
                     message = stringResource(id = R.string.hello_world),
                     senderName = stringResource(id = R.string.samsung),
                     isFromLocalUser = true,

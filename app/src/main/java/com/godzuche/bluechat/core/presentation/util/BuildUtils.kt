@@ -27,6 +27,6 @@ val reset = "\u001B[0m"
 
 inline fun debugLog(generateMsg: () -> String) {
     if (isDebugBuild()) {
-        println("\uD83D\uDEE0\uFE0F $red DEBUG: ${generateMsg()} $reset")
+        println("$red DEBUG: ${generateMsg()} $reset")
     }
 }
